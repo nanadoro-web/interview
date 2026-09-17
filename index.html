@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>면접 연습</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@300;400;500;600&family=Noto+Serif+KR:wght@400;500&display=swap">
+<style>
+  :root{
+    --desk:#DCE0DB; --paper:#FFFFFF; --ink:#17191B; --ink-soft:#5D646A;
+    --rule:#C7CDC5; --rule-soft:#E4E8E2;
+    --accent:#2C4A7C; --accent-weak:#E6ECF4;
+    --flag:#8A5A12; --flag-weak:#F6EEDF;
+    --redact-bg:#17191B; --redact-fg:#C9CFC7;
+    --shadow:0 1px 2px rgba(23,25,27,.08), 0 8px 28px rgba(23,25,27,.07);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --desk:#15181A; --paper:#1F2325; --ink:#E3E7E2; --ink-soft:#98A099;
+      --rule:#343A3B; --rule-soft:#2A2F31;
+      --accent:#8FB3E0; --accent-weak:#232B34;
+      --flag:#D9A857; --flag-weak:#2C2720;
+      --redact-bg:#E3E7E2; --redact-fg:#1F2325;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --desk:#15181A; --paper:#1F2325; --ink:#E3E7E2; --ink-soft:#98A099;
+    --rule:#343A3B; --rule-soft:#2A2F31;
+    --accent:#8FB3E0; --accent-weak:#232B34;
+    --flag:#D9A857; --flag-weak:#2C2720;
+    --redact-bg:#E3E7E2; --redact-fg:#1F2325;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 28px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--desk); color:var(--ink);
+    font-family:"IBM Plex Sans KR",system-ui,-apple-system,"Malgun Gothic",sans-serif;
+    font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1140px;margin:0 auto;padding:0 20px 80px}
+
+  header{
+    display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+    padding:22px 0 18px;border-bottom:1px solid var(--rule);margin-bottom:34px;
+  }
+  header h1{font-size:15px;font-weight:600;margin:0;letter-spacing:-.01em}
+  .steps{display:flex;gap:6px;font-size:13px;color:var(--ink-soft);align-items:baseline}
+  .steps span.on{color:var(--ink);font-weight:500}
+  .steps i{font-style:normal;opacity:.45}
+  header .spacer{flex:1}
+  header .theme{
+    border:1px solid var(--rule);background:transparent;color:var(--ink-soft);
+    font:inherit;font-size:12px;padding:3px 10px;border-radius:2px;cursor:pointer;
+  }
+  header .theme:hover{border-color:var(--ink-soft)}
+
+  .lede{max-width:56ch;margin:0 0 30px}
+  .lede h2{font-family:"Noto Serif KR",serif;font-weight:500;font-size:27px;line-height:1.45;letter-spacing:-.02em;margin:0 0 12px}
+  .lede p{margin:0;color:var(--ink-soft);font-size:14px}
+
+  .dropzone{
+    background:var(--paper);border:1px solid var(--rule);border-radius:3px;
+    box-shadow:var(--shadow);padding:44px 32px;text-align:center;cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .dropzone:hover,.dropzone:focus-visible{border-color:var(--accent);outline:none}
+  .dropzone.over{border-color:var(--accent);background:var(--accent-weak)}
+  .demo-line{font-family:"Noto Serif KR",serif;font-size:17px;margin:0 0 22px;display:inline-flex;align-items:center}
+  .demo-line .label{color:var(--ink-soft);margin-right:8px;font-family:"IBM Plex Sans KR",sans-serif;font-size:14px}
+  .demo-name{position:relative;display:inline-block;padding:1px 4px}
+  .demo-name .cover{position:absolute;inset:0;background:var(--redact-bg);transform-origin:left center;transform:scaleX(0)}
+  @media (prefers-reduced-motion: no-preference){ .demo-name .cover{animation:sweep .5s cubic-bezier(.65,0,.35,1) 1.1s forwards} }
+  @media (prefers-reduced-motion: reduce){ .demo-name .cover{transform:scaleX(1)} }
+  @keyframes sweep{to{transform:scaleX(1)}}
+  .drop-main{font-size:15px;font-weight:500;margin:0 0 6px}
+  .drop-sub{font-size:13px;color:var(--ink-soft);margin:0}
+
+  .fields{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:26px 0 0}
+  .field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:5px}
+  .field input,.field select{
+    width:100%;font:inherit;font-size:14px;padding:8px 10px;
+    background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:2px;
+  }
+  .field input:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  .field .hint{font-size:12px;color:var(--ink-soft);margin-top:5px}
+
+  .altrow{margin-top:22px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  .linkbtn{background:none;border:none;font:inherit;font-size:13px;color:var(--accent);cursor:pointer;padding:0;border-bottom:1px solid currentColor}
+  .linkbtn:hover{opacity:.75}
+
+  .orline{display:flex;align-items:center;gap:14px;margin:30px 0 20px;color:var(--ink-soft);font-size:12.5px}
+  .orline::before,.orline::after{content:"";flex:1;height:1px;background:var(--rule)}
+  .loadcard{
+    background:var(--paper);border:1px dashed var(--rule);border-radius:3px;
+    padding:22px 24px;cursor:pointer;transition:border-color .15s,background .15s;
+  }
+  .loadcard:hover,.loadcard:focus-visible{border-color:var(--accent);outline:none}
+  .loadcard.over{border-color:var(--accent);background:var(--accent-weak)}
+  .lc-main{margin:0 0 5px;font-size:14px;font-weight:500}
+  .lc-sub{margin:0;font-size:12.5px;color:var(--ink-soft);line-height:1.6}
+  .notice{margin-top:34px;padding:16px 18px;border-left:2px solid var(--rule);font-size:13px;color:var(--ink-soft);max-width:62ch}
+  .notice strong{color:var(--ink);font-weight:500}
+  .status{margin-top:22px;font-size:13px;color:var(--ink-soft)}
+  .status.error{color:var(--flag)}
+
+  .review{display:none;grid-template-columns:minmax(0,1fr) 300px;gap:28px;align-items:start}
+  .review.on{display:grid}
+  @media (max-width:900px){ .review.on{grid-template-columns:minmax(0,1fr)} .fields{grid-template-columns:1fr} }
+
+  .sheet{background:var(--paper);border:1px solid var(--rule);border-radius:3px;box-shadow:var(--shadow);padding:30px 32px;min-width:0}
+  .sheet-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--rule-soft);margin-bottom:20px;flex-wrap:wrap}
+  .sheet-head h3{margin:0;font-size:14px;font-weight:600}
+  .sheet-head .meta{font-size:12px;color:var(--ink-soft)}
+  #docText{font-family:"Noto Serif KR",serif;font-size:14.5px;line-height:1.95;white-space:pre-wrap;word-break:break-word;max-width:74ch;max-height:min(58vh,560px);overflow:auto}
+  mark.rd{background:var(--redact-bg);color:var(--redact-fg);font-family:"IBM Plex Sans KR",sans-serif;font-size:11px;padding:2px 6px;border-radius:1px;white-space:nowrap}
+  #docEdit{display:none;width:100%;min-height:420px;font-family:"IBM Plex Sans KR",monospace;font-size:13px;line-height:1.75;padding:14px;resize:vertical;background:var(--paper);color:var(--ink);border:1px solid var(--accent);border-radius:2px}
+
+  .panel{display:flex;flex-direction:column;gap:22px;min-width:0}
+  .card{background:var(--paper);border:1px solid var(--rule);border-radius:3px;box-shadow:var(--shadow);padding:18px 18px 20px}
+  .card h4{margin:0 0 12px;font-size:12px;font-weight:600;color:var(--ink-soft)}
+  .tally{list-style:none;margin:0;padding:0;font-size:13px}
+  .tally li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--rule-soft)}
+  .tally li:last-child{border-bottom:none}
+  .tally .n{font-variant-numeric:tabular-nums;color:var(--ink-soft)}
+  .tally .total{font-weight:600;border-top:1px solid var(--rule);margin-top:4px;padding-top:9px}
+  .check{font-size:13px;display:flex;gap:9px;align-items:flex-start;line-height:1.5}
+  .check .dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto;margin-top:6px}
+  .check.pass .dot{background:var(--accent)}
+  .check.fail .dot{background:var(--flag)}
+  .check.fail{color:var(--flag)}
+  .panel-note{font-size:12px;color:var(--ink-soft);margin:10px 0 0;line-height:1.5}
+  .addrow{display:flex;gap:6px}
+  .addrow input{flex:1;min-width:0;font:inherit;font-size:13px;padding:7px 9px;background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:2px}
+  .addrow input:focus{outline:2px solid var(--accent);outline-offset:-1px}
+
+  .btn{font:inherit;font-size:13.5px;padding:9px 14px;cursor:pointer;border-radius:2px;border:1px solid var(--accent);background:var(--accent);color:var(--paper);width:100%}
+  .btn:hover{opacity:.88}
+  .btn:disabled{opacity:.45;cursor:default}
+  .btn.ghost{background:transparent;color:var(--accent)}
+  .btn.ghost:hover{background:var(--accent-weak);opacity:1}
+  .btn + .btn{margin-top:8px}
+  .btn.small{width:auto;padding:7px 12px;font-size:13px}
+
+  /* 면접 설정 */
+  .setup2{display:none;max-width:720px}
+  .setup2.on{display:block}
+  .formcard{background:var(--paper);border:1px solid var(--rule);border-radius:3px;box-shadow:var(--shadow);padding:26px 28px}
+  .formcard h3{margin:0 0 4px;font-size:15px;font-weight:600}
+  .formcard > p.sub{margin:0 0 22px;font-size:13px;color:var(--ink-soft)}
+  .levels{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
+  @media (max-width:640px){ .levels{grid-template-columns:1fr} }
+  .level{
+    text-align:left;font:inherit;cursor:pointer;padding:12px 13px;border-radius:2px;
+    border:1px solid var(--rule);background:transparent;color:var(--ink);
+  }
+  .level:hover{border-color:var(--accent)}
+  .level.sel{border-color:var(--accent);background:var(--accent-weak)}
+  .level b{display:block;font-size:13.5px;font-weight:600;margin-bottom:3px}
+  .level span{display:block;font-size:12px;color:var(--ink-soft);line-height:1.5}
+  .divider{height:1px;background:var(--rule-soft);margin:24px 0}
+
+  /* 카드 결과 */
+  .cardview{display:none}
+  .cardview.on{display:block}
+  .cv-head{display:flex;justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+  .cv-head h2{font-family:"Noto Serif KR",serif;font-weight:500;font-size:24px;margin:0;letter-spacing:-.02em}
+  .cv-meta{font-size:13px;color:var(--ink-soft)}
+  .strip{background:var(--paper);border:1px solid var(--rule);border-radius:3px;box-shadow:var(--shadow);padding:16px 20px;margin:20px 0 26px}
+  .strip dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:13.5px}
+  .strip dt{color:var(--ink-soft);font-size:12.5px;white-space:nowrap}
+  .strip dd{margin:0}
+  .acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
+  .act{background:var(--paper);border:1px solid var(--rule);border-radius:3px;box-shadow:var(--shadow);padding:18px 20px 20px;display:flex;flex-direction:column;gap:10px}
+  .act-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .act-top h4{margin:0;font-size:14.5px;font-weight:600}
+  .act-top .src{font-size:11.5px;color:var(--ink-soft);white-space:nowrap}
+  .badges{display:flex;gap:5px;flex-wrap:wrap}
+  .badge{font-size:11px;padding:2px 7px;border-radius:2px;background:var(--accent-weak);color:var(--accent)}
+  .badge.t{background:var(--flag-weak);color:var(--flag)}
+  .badge.r{background:transparent;border:1px solid var(--accent);color:var(--accent)}
+  .badge.r.mid{border-color:var(--rule);color:var(--ink-soft)}
+  .badge.r.low{border-color:var(--flag);color:var(--flag)}
+  .act .sum{margin:0;font-size:13.5px;color:var(--ink-soft);line-height:1.6}
+  .act ul{margin:0;padding-left:17px;font-size:13.5px;line-height:1.65}
+  .act ul li{margin-bottom:4px}
+  .probe{font-size:13px;line-height:1.6;border-left:2px solid var(--flag);padding:2px 0 2px 11px;color:var(--ink)}
+  .probe b{font-weight:500;color:var(--flag);font-size:11.5px;display:block;margin-bottom:2px}
+  .gaps{margin-top:26px}
+  .gaps ul{margin:8px 0 0;padding-left:18px;font-size:13.5px;line-height:1.7}
+  .cv-actions{margin-top:30px;display:flex;gap:10px;flex-wrap:wrap}
+
+  .loading{display:flex;align-items:center;gap:11px;font-size:13.5px;color:var(--ink-soft);margin-top:18px}
+  .spin{width:13px;height:13px;border:2px solid var(--rule);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion: reduce){ .spin{animation-duration:2.4s} }
+
+  /* 면접 화면 */
+  .iv{display:none;max-width:780px;margin:0 auto}
+  .iv.on{display:block}
+  .iv-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:22px;font-size:12.5px;color:var(--ink-soft)}
+  .iv-bar .sp{flex:1}
+  .iv-bar select{font:inherit;font-size:12.5px;padding:3px 8px;background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:2px}
+  .clock{font-variant-numeric:tabular-nums;font-size:13px}
+  .clock.low{color:var(--flag)}
+  .qcard{
+    background:var(--paper);border:1px solid var(--rule);border-radius:3px;box-shadow:var(--shadow);
+    padding:30px 34px;min-height:150px;display:flex;flex-direction:column;justify-content:center;
+  }
+  .qcard .who{font-size:11.5px;color:var(--ink-soft);margin:0 0 12px;letter-spacing:.02em}
+  .qcard .q{font-family:"Noto Serif KR",serif;font-size:20px;line-height:1.65;margin:0;letter-spacing:-.01em}
+  .qcard .tag{margin:14px 0 0;font-size:11.5px;color:var(--ink-soft)}
+  .ansbox{margin-top:18px}
+  .ansbox textarea{
+    width:100%;min-height:150px;font:inherit;font-size:14.5px;line-height:1.75;padding:15px 16px;resize:vertical;
+    background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:3px;box-shadow:var(--shadow);
+  }
+  .ansbox textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  .ansrow{margin-top:12px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .ansrow .tip{font-size:12px;color:var(--ink-soft);margin-left:auto}
+  .log{margin-top:34px}
+  .log summary{font-size:12.5px;color:var(--ink-soft);cursor:pointer}
+  .turn{padding:13px 0;border-bottom:1px solid var(--rule-soft)}
+  .turn:last-child{border-bottom:none}
+  .turn .r{font-size:11.5px;color:var(--ink-soft);margin:0 0 4px}
+  .turn .m{margin:0;font-size:13.5px;line-height:1.7;white-space:pre-wrap}
+  .turn.me .m{color:var(--ink-soft)}
+  .done{background:var(--paper);border:1px solid var(--rule);border-radius:3px;box-shadow:var(--shadow);padding:34px 36px;text-align:center}
+  .done h3{font-family:"Noto Serif KR",serif;font-weight:500;font-size:22px;margin:0 0 10px}
+  .done p{margin:0 0 22px;font-size:13.5px;color:var(--ink-soft)}
+  .done .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .fb-h{font-family:"Noto Serif KR",serif;font-weight:500;font-size:18px;margin:34px 0 14px;letter-spacing:-.01em}
+  .grades{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+  .grade{background:var(--paper);border:1px solid var(--rule);border-radius:3px;box-shadow:var(--shadow);padding:15px 16px}
+  .grade .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:7px}
+  .grade .nm{font-size:13px;font-weight:600}
+  .grade .gv{font-family:"Noto Serif KR",serif;font-size:21px;line-height:1}
+  .grade.g상 .gv{color:var(--accent)}
+  .grade.g중 .gv{color:var(--ink-soft)}
+  .grade.g하 .gv{color:var(--flag)}
+  .grade.gna .gv{font-size:13px;color:var(--ink-soft)}
+  .grade p{margin:0;font-size:12.5px;line-height:1.6;color:var(--ink-soft)}
+  .pt{background:var(--paper);border:1px solid var(--rule);border-radius:3px;box-shadow:var(--shadow);padding:18px 20px;margin-bottom:12px}
+  .pt .qq{font-size:12px;color:var(--ink-soft);margin:0 0 9px}
+  .pt .said{font-family:"Noto Serif KR",serif;font-size:14px;line-height:1.7;margin:0 0 10px;padding-left:11px;border-left:2px solid var(--rule)}
+  .pt .why{font-size:13.5px;line-height:1.7;margin:0 0 11px}
+  .pt .fix{font-size:13.5px;line-height:1.7;margin:0;padding:11px 13px;background:var(--accent-weak);border-radius:2px}
+  .pt .fix b{display:block;font-size:11.5px;color:var(--accent);font-weight:500;margin-bottom:3px}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:26px}
+  @media (max-width:700px){ .twocol{grid-template-columns:1fr} }
+  .twocol ul{margin:8px 0 0;padding-left:17px;font-size:13.5px;line-height:1.75}
+  .twocol p{margin:8px 0 0;font-size:13.5px;line-height:1.75}
+  .tgl{font:inherit;font-size:12.5px;padding:3px 9px;cursor:pointer;border-radius:2px;border:1px solid var(--rule);background:transparent;color:var(--ink-soft)}
+  .tgl[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-weak)}
+  .iv-bar select{max-width:150px}
+  .replay{margin-top:14px;align-self:flex-start;font:inherit;font-size:12px;padding:3px 9px;cursor:pointer;border-radius:2px;border:1px solid var(--rule);background:transparent;color:var(--ink-soft)}
+  .replay:hover{border-color:var(--accent);color:var(--accent)}
+  #micBtn.rec{background:var(--flag);border-color:var(--flag)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+  #micBtn.rec{animation:pulse 1.4s ease-in-out infinite}
+  @media (prefers-reduced-motion: reduce){ #micBtn.rec{animation:none} }
+
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>면접 연습</h1>
+    <div class="steps" id="steps">
+      <span id="s1" class="on">1 개인정보 지우기</span><i>›</i>
+      <span id="s2">2 면접 카드</span><i>›</i>
+      <span id="s3">3 면접</span><i>›</i>
+      <span id="s4">4 피드백</span>
+    </div>
+    <span class="spacer"></span>
+    <button class="theme" id="themeBtn" type="button">화면 전환</button>
+  </header>
+
+  <!-- ========== 1단계 · 업로드 ========== -->
+  <section id="setup">
+    <div class="lede">
+      <h2>면접을 시작하기 전에<br>생기부에서 나를 지웁니다.</h2>
+      <p>파일은 이 컴퓨터를 벗어나지 않습니다. 브라우저 안에서 읽고, 가리고, 화면에 보여줄 뿐입니다. 저장하지도 않아서 창을 닫으면 사라집니다.</p>
+    </div>
+
+    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="생기부 PDF 파일 선택">
+      <p class="demo-line"><span class="label">성명</span><span class="demo-name">홍길동<span class="cover"></span></span></p>
+      <p class="drop-main">생기부 PDF를 여기에 놓으세요</p>
+      <p class="drop-sub">누르면 파일을 고를 수도 있습니다</p>
+      <input type="file" id="fileInput" accept="application/pdf,.pdf" class="visually-hidden">
+    </div>
+
+    <div class="fields">
+      <div class="field">
+        <label for="nameIn">내 이름</label>
+        <input type="text" id="nameIn" placeholder="예: 홍길동" autocomplete="off">
+        <p class="hint">적어두면 본문 어디에 있든 확실히 지워집니다.</p>
+      </div>
+      <div class="field">
+        <label for="schoolIn">학교 이름</label>
+        <input type="text" id="schoolIn" placeholder="예: ○○고등학교" autocomplete="off">
+        <p class="hint">비워도 됩니다. ○○고등학교 형태는 자동으로 찾습니다.</p>
+      </div>
+    </div>
+
+    <div class="altrow">
+      <button class="linkbtn" id="sampleBtn" type="button">PDF 없이 예시 생기부로 시험해보기</button>
+    </div>
+    <p class="status" id="status"></p>
+
+    <div class="orline"><span>또는</span></div>
+
+    <div class="loadcard" id="loadzone" tabindex="0" role="button" aria-label="저장해 둔 면접 카드 불러오기">
+      <p class="lc-main">전에 만든 면접 카드가 있다면 불러오세요</p>
+      <p class="lc-sub">면접카드.json 파일을 여기에 놓거나 눌러서 고르면, 생기부를 다시 읽지 않고 바로 면접으로 갑니다.</p>
+      <input type="file" id="cardFileInput" accept="application/json,.json" class="visually-hidden">
+    </div>
+    <p class="status" id="loadStatus"></p>
+
+    <div class="notice">
+      <strong>스캔한 PDF는 읽지 못합니다.</strong> 종이로 출력해 스캔한 파일은 글자가 아니라 사진이라 텍스트가 나오지 않습니다. 나이스에서 바로 내려받은 파일을 쓰세요. 열람용 암호가 걸려 있으면 먼저 풀어야 합니다.
+    </div>
+  </section>
+
+  <!-- ========== 1단계 · 검수 ========== -->
+  <section class="review" id="review">
+    <div class="sheet">
+      <div class="sheet-head">
+        <h3>가린 결과</h3>
+        <span class="meta" id="sheetMeta"></span>
+      </div>
+      <div id="docText"></div>
+      <textarea id="docEdit" spellcheck="false" aria-label="정제된 생기부 내용 직접 고치기"></textarea>
+    </div>
+
+    <aside class="panel">
+      <div class="card"><h4>가린 항목</h4><ul class="tally" id="tally"></ul></div>
+      <div class="card"><h4>마지막 점검</h4><div id="checks" style="display:flex;flex-direction:column;gap:9px"></div></div>
+      <div class="card">
+        <h4>직접 가리기</h4>
+        <div class="addrow">
+          <input type="text" id="addIn" placeholder="친구 이름, 동아리명…" autocomplete="off">
+          <button class="btn small" id="addBtn" type="button">가리기</button>
+        </div>
+        <p class="panel-note">목록에 없는 말을 직접 넣어 지울 수 있습니다.</p>
+      </div>
+      <div class="card">
+        <button class="btn" id="toStep2Btn" type="button">면접 설정으로</button>
+        <button class="btn ghost" id="editBtn" type="button">본문 직접 고치기</button>
+        <button class="btn ghost" id="restartBtn" type="button">다른 파일로 다시 하기</button>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ========== 2단계 · 면접 설정 ========== -->
+  <section class="setup2" id="setup2">
+    <div class="lede">
+      <h2>어디에, 어떤 강도로.</h2>
+      <p>지원할 대학과 학과를 적으면 그에 맞춰 질문을 고릅니다. 난이도는 면접 도중에도 바꿀 수 있습니다.</p>
+    </div>
+
+    <div class="formcard">
+      <div class="fields" style="margin-top:0">
+        <div class="field">
+          <label for="univIn">지원 대학</label>
+          <input type="text" id="univIn" placeholder="예: ○○대학교" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="majorIn">지원 학과</label>
+          <input type="text" id="majorIn" placeholder="예: 무역학과" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <label style="display:block;font-size:12px;color:var(--ink-soft);margin-bottom:2px">난이도</label>
+      <div class="levels" id="levels"></div>
+
+      <div class="divider"></div>
+
+      <div class="fields" style="margin-top:0">
+        <div class="field">
+          <label for="countIn">뽑을 활동 수</label>
+          <select id="countIn">
+            <option value="10">10개 · 한 번만 볼 때</option>
+            <option value="15" selected>15개 · 두세 번 연습</option>
+            <option value="20">20개 · 생기부를 넓게</option>
+            <option value="25">25개 · 최대한 많이</option>
+          </select>
+          <p class="hint">한 번 면접에 6~8개를 씁니다. 넉넉히 뽑아두면 다음 연습에서 다른 질문이 나옵니다.</p>
+        </div>
+        <div class="field"></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="fields" style="margin-top:0">
+        <div class="field">
+          <label for="keyIn" id="keyLabel">Gemini API 키</label>
+          <input type="password" id="keyIn" placeholder="AIza…" autocomplete="off">
+          <p class="hint" id="keyHint">저장하지 않습니다. 창을 닫으면 사라집니다.</p>
+        </div>
+        <div class="field">
+          <label for="modelSel">모델 · 카드와 면접</label>
+          <select id="modelSel"></select>
+          <input type="text" id="modelIn" class="custom" placeholder="모델 이름을 직접 입력" autocomplete="off" style="display:none;margin-top:6px">
+          <p class="hint">빠르고 싼 쪽이 기본입니다. 카드가 얕게 나오면 한 단계 올려보세요.</p>
+        </div>
+      </div>
+
+      <div class="fields" style="margin-top:16px">
+        <div class="field">
+          <label for="fbModelSel">모델 · 면접 뒤 피드백</label>
+          <select id="fbModelSel"></select>
+          <input type="text" id="fbModelIn" class="custom" placeholder="모델 이름을 직접 입력" autocomplete="off" style="display:none;margin-top:6px">
+          <p class="hint">한 번만 부르는 호출이라 좋은 모델을 써도 부담이 적습니다.</p>
+        </div>
+        <div class="field"></div>
+      </div>
+
+      <div style="margin-top:24px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn small" id="makeCardBtn" type="button">면접 카드 만들기</button>
+        <button class="btn small" id="startFromSetupBtn" type="button" style="display:none">면접 시작</button>
+        <button class="btn ghost small" id="backToReviewBtn" type="button">가린 결과로 돌아가기</button>
+      </div>
+      <p class="status" id="status2"></p>
+      <details id="rawWrap" style="display:none;margin-top:10px">
+        <summary style="font-size:12.5px;color:var(--ink-soft);cursor:pointer">원래 오류 내용 보기</summary>
+        <pre id="rawErr" style="margin:8px 0 0;padding:11px 13px;background:var(--desk);border:1px solid var(--rule);border-radius:2px;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-all;color:var(--ink-soft)"></pre>
+      </details>
+      <div class="loading" id="loading2" style="display:none"><span class="spin"></span><span>생기부를 읽고 있습니다. 20초쯤 걸립니다.</span></div>
+    </div>
+
+    <div class="notice">
+      <strong>여기서부터 내용이 밖으로 나갑니다.</strong> 가린 뒤의 본문이 <span id="어디로">Gemini</span>로 전송됩니다. 원본 PDF는 여전히 이 컴퓨터를 벗어나지 않지만, 정제된 글은 전송되니 왼쪽 점검을 통과했는지 확인하고 넘어가세요.
+    </div>
+  </section>
+
+  <!-- ========== 2단계 · 카드 ========== -->
+  <section class="cardview" id="cardview">
+    <div class="cv-head">
+      <h2>면접 카드</h2>
+      <span class="cv-meta" id="cvMeta"></span>
+    </div>
+    <div class="strip" id="cvStrip"></div>
+    <p class="cv-meta" style="margin:-12px 0 18px">한 번 면접에는 이 중 6~8개만 씁니다. 매번 다르게 뽑히니 여러 번 연습할수록 넓게 다뤄집니다.</p>
+    <p class="cv-meta" id="cvLoaded" style="display:none;margin:-10px 0 18px;padding:10px 13px;border-left:2px solid var(--accent);background:var(--accent-weak)">저장해 둔 카드를 불러왔습니다. 생기부를 다시 읽지 않았으므로 활동을 더 뽑으려면 생기부부터 올려야 합니다.</p>
+    <div class="acts" id="cvActs"></div>
+    <div class="card gaps" id="cvGaps"></div>
+    <div class="cv-actions">
+      <button class="btn small" id="startIvBtn" type="button">면접 시작</button>
+      <button class="btn ghost small" id="cardMoreBtn" type="button">활동 더 뽑기</button>
+      <button class="btn ghost small" id="cardSaveBtn" type="button">카드 저장</button>
+      <button class="btn ghost small" id="cardRedoBtn" type="button">다시 만들기</button>
+      <button class="btn ghost small" id="cardBackBtn" type="button">설정으로</button>
+    </div>
+  </section>
+
+  <!-- ========== 3단계 · 면접 ========== -->
+  <section class="iv" id="iv">
+    <div class="iv-bar">
+      <span id="ivLevel"></span>
+      <span id="ivCount"></span>
+      <span class="sp"></span>
+      <button class="tgl" id="ttsBtn" type="button" aria-pressed="true" title="질문 읽어주기 켜기/끄기">읽어주기 켬</button>
+      <select id="voiceSel" title="목소리"></select>
+      <select id="rateSel" title="말하기 속도">
+        <option value="0.85">느리게</option>
+        <option value="1" selected>보통</option>
+        <option value="1.15">빠르게</option>
+      </select>
+      <label for="ivLevelSel" style="font-size:12.5px">난이도</label>
+      <select id="ivLevelSel">
+        <option value="1">1 기본</option>
+        <option value="2">2 실전</option>
+        <option value="3">3 심화</option>
+      </select>
+      <span class="clock" id="ivClock">10:00</span>
+    </div>
+
+    <div class="qcard" id="qcard">
+      <p class="who">면접관</p>
+      <p class="q" id="qText">면접을 준비하고 있습니다…</p>
+      <p class="tag" id="qTag"></p>
+      <button class="replay" id="replayBtn" type="button" style="display:none">다시 듣기</button>
+    </div>
+
+    <div class="ansbox" id="ansbox">
+      <textarea id="ansIn" placeholder="답변을 입력하세요. 실제 면접처럼 소리 내어 말해보고 그대로 적으면 연습이 됩니다." aria-label="답변"></textarea>
+      <div class="ansrow">
+        <button class="btn small" id="micBtn" type="button" style="display:none">말하기</button>
+        <button class="btn small" id="ansBtn" type="button">답변 완료</button>
+        <button class="btn ghost small" id="dunnoBtn" type="button">잘 모르겠습니다</button>
+        <button class="btn ghost small" id="ivStopBtn" type="button">면접 그만두기</button>
+        <span class="tip" id="ansTip">Ctrl 또는 Cmd + Enter</span>
+      </div>
+      <p class="status" id="ivStatus"></p>
+    </div>
+
+    <details class="log" id="ivLog" style="display:none">
+      <summary>지난 대화 보기</summary>
+      <div id="ivLogBody"></div>
+    </details>
+
+    <div class="done" id="ivDone" style="display:none">
+      <h3 id="doneTitle">면접이 끝났습니다.</h3>
+      <p id="doneSub"></p>
+      <div class="row" style="margin-bottom:14px;align-items:center">
+        <label for="fbModelSel2" style="font-size:12.5px;color:var(--ink-soft)">피드백 모델</label>
+        <select id="fbModelSel2" style="font:inherit;font-size:12.5px;padding:4px 9px;background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:2px"></select>
+        <input type="text" id="fbModelIn2" placeholder="직접 입력" autocomplete="off" style="display:none;font:inherit;font-size:12.5px;padding:4px 9px;background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:2px">
+      </div>
+      <div class="row">
+        <button class="btn small" id="fbBtn" type="button">피드백 받기</button>
+        <button class="btn ghost small" id="doneSaveBtn" type="button">기록 저장</button>
+        <button class="btn ghost small" id="doneAgainBtn" type="button">다시 면접 보기</button>
+        <button class="btn ghost small" id="doneCardBtn" type="button">카드로 돌아가기</button>
+      </div>
+      <div class="loading" id="fbLoading" style="display:none;justify-content:center"><span class="spin"></span><span>면접을 되짚어 보고 있습니다.</span></div>
+      <p class="status" id="fbStatus"></p>
+      <details id="fbRawWrap" style="display:none;margin-top:10px;text-align:left">
+        <summary style="font-size:12.5px;color:var(--ink-soft);cursor:pointer">모델이 보낸 내용 보기</summary>
+        <pre id="fbRaw" style="margin:8px 0 0;padding:11px 13px;background:var(--desk);border:1px solid var(--rule);border-radius:2px;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-all;color:var(--ink-soft);max-height:300px;overflow:auto"></pre>
+      </details>
+    </div>
+
+    <!-- 피드백 -->
+    <div id="fb" style="display:none">
+      <h3 class="fb-h">영역별 평가</h3>
+      <div class="grades" id="fbGrades"></div>
+
+      <h3 class="fb-h">고칠 곳</h3>
+      <div id="fbPoints"></div>
+
+      <div class="twocol">
+        <div class="card" id="fbGood"></div>
+        <div class="card" id="fbNext"></div>
+      </div>
+
+      <div class="cv-actions">
+        <button class="btn small" id="fbSaveBtn" type="button">피드백 저장</button>
+        <button class="btn ghost small" id="fbAgainBtn" type="button">다시 면접 보기</button>
+        <button class="btn ghost small" id="fbCardBtn" type="button">카드로 돌아가기</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="prompts.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* =====================================================================
+     여기만 고치면 배포 방식이 바뀝니다.
+
+     중계 서버를 만드셨다면 주소를 넣으세요. 학생은 접속 코드만 넣으면 됩니다.
+       예) var 중계서버 = "https://interview-proxy.아이디.workers.dev";
+     비워 두면 학생이 각자 자기 API 키를 넣는 방식으로 동작합니다.
+     ===================================================================== */
+  var 중계서버 = "https://interview-proxy.nanadoro.workers.dev/";
+
+  /* 상태 — 메모리에만. localStorage 등 저장소를 쓰지 않습니다. */
+  var rawText = "", cleanText = "", extraWords = [], editing = false;
+  var 난이도 = (window.PROMPTS && window.PROMPTS.CONFIG.기본난이도) || 2;
+  var 카드 = null;
+
+  var LABELS = ["이름","학교명","담임교사","보호자","학년반번호","주민등록번호","생년월일","연락처","이메일","주소","가림"];
+  var $ = function(id){ return document.getElementById(id); };
+
+  $("themeBtn").addEventListener("click", function(){
+    var cur = document.documentElement.getAttribute("data-theme");
+    var dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var now = cur ? cur : (dark ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", now === "dark" ? "light" : "dark");
+  });
+
+  /* ---------------- 응답 형식(스키마) ----------------
+     모델이 마음대로 모양을 바꾸지 못하게 API 단에서 묶어 둡니다. */
+  var 글 = { type: "STRING" };
+  var 카드스키마 = {
+    type: "OBJECT",
+    properties: {
+      "진로흐름": 글,
+      "출결": 글,
+      "활동": {
+        type: "ARRAY",
+        items: {
+          type: "OBJECT",
+          properties: {
+            "id": 글, "출처": 글, "구분": 글, "제목": 글, "요약": 글,
+            "영역": 글, "학과관련": 글, "질문유형": 글,
+            "질문후보": { type: "ARRAY", items: 글 },
+            "파고들지점": 글
+          },
+          required: ["id","출처","구분","제목","요약","영역","학과관련","질문유형","질문후보","파고들지점"]
+        }
+      },
+      "빈틈": { type: "ARRAY", items: 글 }
+    },
+    required: ["진로흐름","활동"]
+  };
+
+  var 진행스키마 = {
+    type: "OBJECT",
+    properties: {
+      "행동": 글, "질문": 글, "근거활동": 글, "질문유형": 글, "꼬리이유": 글
+    },
+    required: ["행동","질문"]
+  };
+
+  var 평가스키마 = {
+    type: "OBJECT",
+    properties: {
+      "영역등급": {
+        type: "ARRAY",
+        items: {
+          type: "OBJECT",
+          properties: { "영역": 글, "등급": 글, "이유": 글 },
+          required: ["영역","등급","이유"]
+        }
+      },
+      "지적사항": {
+        type: "ARRAY",
+        items: {
+          type: "OBJECT",
+          properties: { "문항": 글, "문제된답": 글, "왜": 글, "이렇게": 글 },
+          required: ["문항","왜","이렇게"]
+        }
+      },
+      "잘한점": { type: "ARRAY", items: 글 },
+      "다음연습": 글
+    },
+    required: ["영역등급","지적사항","다음연습"]
+  };
+
+  /* ---------------- 모델 선택 ---------------- */
+  var 모델목록 = [
+    ["gemini-3.5-flash-lite", "가장 빠르고 쌈 · 기본"],
+    ["gemini-3.6-flash",      "균형"],
+    ["gemini-3.7-flash",      "더 똑똑함"],
+    ["gemini-3.8-flash",      "가장 똑똑한 Flash"],
+    ["gemini-3.1-pro-preview","최상위 · 느리고 비쌈"]
+  ];
+
+  function 모델칸만들기(selId, inId, 기본){
+    var sel = $(selId), inp = $(inId);
+    sel.innerHTML = "";
+    모델목록.forEach(function(m){
+      var o = document.createElement("option");
+      o.value = m[0];
+      o.textContent = m[0] + " — " + m[1];
+      sel.appendChild(o);
+    });
+    var o2 = document.createElement("option");
+    o2.value = "__custom__";
+    o2.textContent = "직접 입력…";
+    sel.appendChild(o2);
+    sel.value = 기본;
+    sel.addEventListener("change", function(){
+      var 직접 = sel.value === "__custom__";
+      inp.style.display = 직접 ? "" : "none";
+      if (직접) inp.focus();
+    });
+  }
+
+  function 모델읽기(selId, inId){
+    var v = $(selId).value;
+    if (v === "__custom__") return $(inId).value.trim() || "gemini-3.5-flash-lite";
+    return v;
+  }
+
+  /* 중계 서버를 쓰면 학생은 키 대신 접속 코드를 넣는다 */
+  if (중계서버){
+    $("keyLabel").textContent = "접속 코드";
+    $("keyIn").placeholder = "선생님께 받은 코드";
+    $("keyHint").textContent = "저장하지 않습니다. 창을 닫으면 사라집니다.";
+    var 어디로 = $("어디로");
+    if (어디로) 어디로.textContent = "학교 중계 서버를 거쳐 Gemini";
+  }
+
+  모델칸만들기("modelSel", "modelIn", "gemini-3.5-flash-lite");
+  모델칸만들기("fbModelSel", "fbModelIn", "gemini-3.5-flash-lite");
+  모델칸만들기("fbModelSel2", "fbModelIn2", "gemini-3.5-flash-lite");
+
+  // 설정 화면과 피드백 화면의 피드백 모델을 서로 맞춰 둔다
+  $("fbModelSel").addEventListener("change", function(){
+    $("fbModelSel2").value = this.value;
+    $("fbModelIn2").style.display = (this.value === "__custom__") ? "" : "none";
+  });
+  $("fbModelSel2").addEventListener("change", function(){
+    $("fbModelSel").value = this.value;
+    $("fbModelIn").style.display = (this.value === "__custom__") ? "" : "none";
+  });
+  $("fbModelIn").addEventListener("input", function(){ $("fbModelIn2").value = this.value; });
+  $("fbModelIn2").addEventListener("input", function(){ $("fbModelIn").value = this.value; });
+
+  function 단계표시(n){
+    ["s1","s2","s3","s4"].forEach(function(id,i){ $(id).classList.toggle("on", i === n-1); });
+  }
+
+  /* ---------------- 마스킹 ---------------- */
+  function esc(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+
+  function mask(text, myName, mySchool, extras){
+    var counts = {};
+    function sub(re, label, keepGroup){
+      text = text.replace(re, function(){
+        counts[label] = (counts[label]||0) + 1;
+        return keepGroup ? (arguments[1] + "[" + label + "]") : ("[" + label + "]");
+      });
+    }
+    sub(/\d{6}\s*[-–—]\s*[\d*]{7}/g, "주민등록번호", false);
+    sub(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, "이메일", false);
+    sub(/\b0\d{1,2}[-.\s]?\d{3,4}[-.\s]?\d{4}\b/g, "연락처", false);
+    sub(/((?:성\s*명|이\s*름)\s*[:：]?\s*)[가-힣]{2,4}/g, "이름", true);
+    sub(/((?:담임교사|담임|지도교사|담당교사)\s*[:：]?\s*)[가-힣]{2,4}/g, "담임교사", true);
+    sub(/((?:보호자|부|모)\s*(?:성명)?\s*[:：]\s*)[가-힣]{2,4}/g, "보호자", true);
+    sub(/((?:생년월일|생일)\s*[:：]?\s*)\d{4}\s*[년.\-/]\s*\d{1,2}\s*[월.\-/]\s*\d{1,2}\s*일?/g, "생년월일", true);
+    sub(/((?:주\s*소|거주지)\s*[:：]?\s*)[^\n]{4,60}/g, "주소", true);
+    sub(/[가-힣]{2,10}(?:고등학교|중학교|초등학교)/g, "학교명", false);
+    sub(/\d{1,2}\s*학년\s*\d{1,2}\s*반(?:\s*\d{1,2}\s*번)?/g, "학년반번호", false);
+    if (myName && myName.trim().length >= 2) sub(new RegExp(esc(myName.trim()), "g"), "이름", false);
+    if (mySchool && mySchool.trim().length >= 2) sub(new RegExp(esc(mySchool.trim()), "g"), "학교명", false);
+    (extras||[]).forEach(function(w){
+      if (w && w.trim()) sub(new RegExp(esc(w.trim()), "g"), "가림", false);
+    });
+    return { text: text, counts: counts };
+  }
+
+  /* 출결 표 정리 — 숫자만 나열된 줄은 버리고 요약줄만 남깁니다 */
+  function 출결정리(text){
+    var lines = text.split("\n");
+    var out = [], dropped = 0;
+    for (var i=0;i<lines.length;i++){
+      var l = lines[i];
+      var t = l.trim();
+      // 숫자와 공백만으로 이루어진 4토큰 이상의 줄 = 깨진 표
+      if (/^[\d\s.]+$/.test(t) && t.split(/\s+/).length >= 5){ dropped++; continue; }
+      if (/^(질병\s+무단\s+기타\s*)+$/.test(t)){ dropped++; continue; }
+      out.push(l);
+    }
+    return { text: out.join("\n"), dropped: dropped };
+  }
+
+  function runChecks(text, myName){
+    var out = [];
+    function check(re, msg, okMsg){
+      var m = text.match(re);
+      out.push({ ok: !m, text: m ? (msg + " " + m.length + "곳") : okMsg });
+    }
+    check(/\d{6}\s*[-–—]\s*[\d*]{7}/g, "주민등록번호가 남아 있습니다", "주민등록번호 없음");
+    check(/\b0\d{1,2}[-.\s]?\d{3,4}[-.\s]?\d{4}\b/g, "전화번호가 남아 있습니다", "전화번호 없음");
+    check(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, "이메일이 남아 있습니다", "이메일 없음");
+    check(/[가-힣]{2,10}(?:고등학교|중학교|초등학교)/g, "학교 이름이 남아 있습니다", "학교 이름 없음");
+    if (myName && myName.trim().length >= 2)
+      check(new RegExp(esc(myName.trim()), "g"), "적어준 이름이 남아 있습니다", "적어준 이름 없음");
+    return out;
+  }
+
+  function escHtml(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  function renderDoc(){
+    var labelRe = new RegExp("\\[(" + LABELS.join("|") + ")\\]", "g");
+    $("docText").innerHTML = escHtml(cleanText).replace(labelRe, function(_, l){
+      return '<mark class="rd">' + l + "</mark>";
+    });
+  }
+
+  function renderTally(counts, dropped){
+    var ul = $("tally"); ul.innerHTML = ""; var total = 0;
+    LABELS.forEach(function(l){
+      if (!counts[l]) return;
+      total += counts[l];
+      var li = document.createElement("li");
+      li.innerHTML = "<span>" + l + '</span><span class="n">' + counts[l] + "</span>";
+      ul.appendChild(li);
+    });
+    if (total === 0){
+      var none = document.createElement("li");
+      none.innerHTML = '<span style="font-size:12.5px;line-height:1.5;color:var(--ink-soft)">가릴 것이 없었습니다. 이미 정리된 파일로 보입니다.</span>';
+      ul.appendChild(none);
+    } else {
+      var li2 = document.createElement("li");
+      li2.className = "total";
+      li2.innerHTML = "<span>모두</span><span class='n'>" + total + "</span>";
+      ul.appendChild(li2);
+    }
+    if (dropped > 0){
+      var li3 = document.createElement("li");
+      li3.innerHTML = '<span style="font-size:12px;color:var(--ink-soft)">깨진 출결 표 ' + dropped + '줄 삭제</span>';
+      ul.appendChild(li3);
+    }
+  }
+
+  function renderChecks(list){
+    var box = $("checks"); box.innerHTML = "";
+    list.forEach(function(c){
+      var d = document.createElement("div");
+      d.className = "check " + (c.ok ? "pass" : "fail");
+      d.innerHTML = '<span class="dot"></span><span>' + escHtml(c.text) + "</span>";
+      box.appendChild(d);
+    });
+  }
+
+  var lastDropped = 0;
+  function rebuild(){
+    var myName = $("nameIn").value, mySchool = $("schoolIn").value;
+    var cleaned = 출결정리(rawText);
+    lastDropped = cleaned.dropped;
+    var r = mask(cleaned.text, myName, mySchool, extraWords);
+    cleanText = r.text;
+    renderDoc();
+    renderTally(r.counts, lastDropped);
+    renderChecks(runChecks(cleanText, myName));
+    $("sheetMeta").textContent = cleanText.length.toLocaleString() + "자";
+    show("review");
+    단계표시(1);
+  }
+
+  function show(which){
+    ["setup","review","setup2","cardview","iv"].forEach(function(id){
+      var el = $(id);
+      if (id === "review") el.classList.toggle("on", which === id);
+      else if (id === "setup") el.style.display = (which === id) ? "" : "none";
+      else el.classList.toggle("on", which === id);
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  /* ---------------- PDF ---------------- */
+  function setStatus(msg, isError){
+    var el = $("status");
+    el.textContent = msg || "";
+    el.className = "status" + (isError ? " error" : "");
+  }
+  if (window.pdfjsLib)
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+  function pageToText(page){
+    return page.getTextContent().then(function(tc){
+      var out = "", lastY = null;
+      tc.items.forEach(function(it){
+        var y = it.transform[5];
+        if (lastY !== null && Math.abs(y - lastY) > 3) out += "\n";
+        out += it.str; lastY = y;
+      });
+      return out;
+    });
+  }
+
+  function readPdf(file){
+    if (!window.pdfjsLib){ setStatus("PDF 읽기 도구를 불러오지 못했습니다. 새로고침해 보세요.", true); return; }
+    setStatus("읽는 중…");
+    var reader = new FileReader();
+    reader.onerror = function(){ setStatus("파일을 열지 못했습니다.", true); };
+    reader.onload = function(){
+      pdfjsLib.getDocument({ data: new Uint8Array(reader.result) }).promise.then(function(pdf){
+        var jobs = [];
+        for (var i = 1; i <= pdf.numPages; i++) jobs.push(pdf.getPage(i).then(pageToText));
+        return Promise.all(jobs).then(function(pages){
+          var text = pages.join("\n\n").replace(/[ \t]+/g," ").replace(/\n{3,}/g,"\n\n").trim();
+          if (text.length < 50){
+            setStatus("글자를 거의 찾지 못했습니다. 스캔한 PDF로 보입니다.", true); return;
+          }
+          rawText = text; extraWords = []; setStatus(""); rebuild();
+        });
+      }).catch(function(err){
+        setStatus((err && err.name === "PasswordException")
+          ? "암호가 걸린 PDF입니다. 암호를 푼 뒤 다시 올리세요."
+          : "PDF를 읽지 못했습니다. 다른 파일로 시도해보세요.", true);
+      });
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  var SAMPLE = [
+"학교생활기록부","","1. 인적·학적사항","성명: 홍길동    성별: 남","주민등록번호: 070315-3******",
+"생년월일: 2007년 3월 15일","주소: 충청남도 ○○시 ○○동 ○○아파트 101동 1203호",
+"연락처: 010-1234-5678    이메일: hong0315@example.com","학적사항: 2023년 3월 2일 ○○고등학교 제1학년 입학","",
+"2. 출결상황","학년 수업일수 질병 무단 기타 질병 무단 기타","1 190 0 0 0 0 0 0 1 0 0 0 0 0","2 190 1 0 0 0 0 0 0 0 0 0 0 0",
+"결석 1 · 지각 0 · 조퇴 1 (3년 합계)","",
+"3. 창의적 체험활동상황",
+"(자율활동) 2학년 3반 12번으로서 학급 부반장을 맡아 학급 회의를 진행함. 담임교사 김영수 선생님의 지도 아래 또래 상담 활동을 기획하여 학급 내 갈등 조정에 기여함.",
+"(동아리활동) 지리탐구반 부장을 맡아 '서산 간척지의 토지이용 변화'를 주제로 탐구를 진행함. 같은 조원인 박지훈, 이서연과 역할을 나누어 위성영상 자료를 비교 분석하였고, 간척 이후 농경지가 축소되고 산업용지가 늘어난 과정을 지도로 정리함.",
+"(진로활동) 도시계획 분야 진로 탐색의 일환으로 고령화 지역의 생활 인프라 배치 문제를 보고서로 작성함.","",
+"4. 교과학습발달상황 세부능력 및 특기사항",
+"[한국지리] 지형 단원에서 하천 퇴적 지형의 형성 과정을 모형으로 제작하여 발표함. 교과서의 일반적 설명에 머물지 않고 천수만 일대의 사례를 직접 조사하여 적용한 점이 돋보임.",
+"[세계시민과지리] 기후변화에 따른 식량 불평등을 주제로 모둠 토론을 이끎. 통계 자료를 인용할 때 기준 연도와 조사 기관을 함께 밝히는 신중함을 보임.","",
+"5. 행동특성 및 종합의견",
+"○○고등학교 2학년 3반 12번 홍길동 학생은 한 가지 주제를 오래 붙들고 파고드는 힘이 있음. 결론을 서두르지 않고 반대 근거를 먼저 찾아보는 습관이 있어 발표의 설득력이 높음."
+].join("\n");
+
+  /* ---------------- 난이도 버튼 ---------------- */
+  function renderLevels(){
+    var box = $("levels"); box.innerHTML = "";
+    var 표 = window.PROMPTS.난이도표;
+    var 설명 = {
+      1: "진위 확인 위주로 넓게 훑습니다. 처음 연습할 때.",
+      2: "실제 대학 면접에 가장 가깝습니다.",
+      3: "서너 주제만 골라 끝까지 파고듭니다. 교수의 날카로운 질문."
+    };
+    [1,2,3].forEach(function(d){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "level" + (d === 난이도 ? " sel" : "");
+      b.innerHTML = "<b>" + d + "단계 · " + 표[d].이름 + "</b><span>" + 설명[d] + "</span>";
+      b.addEventListener("click", function(){
+        난이도 = d;
+        Array.prototype.forEach.call(box.children, function(c,i){ c.classList.toggle("sel", i === d-1); });
+      });
+      box.appendChild(b);
+    });
+  }
+
+  /* ---------------- Gemini 호출 ----------------
+     혼잡(503)이나 속도 제한(429)은 잠시 뒤 다시 시도하면 대개 풀립니다.
+     기다리는 시간을 조금씩 늘려가며 세 번까지 재시도합니다. */
+  var 재시도_최대 = 3;
+
+  function 잠깐(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+
+  function callGemini(prompt, key, model, onRetry, schema){
+    var 서버씀 = !!중계서버;
+    var url = 서버씀
+      ? 중계서버
+      : ("https://generativelanguage.googleapis.com/v1beta/models/"
+         + encodeURIComponent(model) + ":generateContent?key=" + encodeURIComponent(key));
+    var 스키마쓰기 = !!schema;   // 모델이 스키마를 못 받으면 한 번 빼고 다시 시도한다
+
+    function 한번(시도){
+      var cfg = { temperature: 0.4, responseMimeType: "application/json" };
+      if (스키마쓰기) cfg.responseSchema = schema;
+      var 머리 = { "Content-Type": "application/json" };
+      if (서버씀) 머리["X-Class-Code"] = key;
+      var 몸 = {
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: cfg
+      };
+      if (서버씀) 몸.model = model;
+      return fetch(url, {
+        method: "POST",
+        headers: 머리,
+        body: JSON.stringify(몸)
+      }).then(function(res){
+        return res.json().catch(function(){ return {}; }).then(function(data){
+          if (!res.ok){
+            var msg = (data && data.error && data.error.message)
+                   || (data && typeof data.error === "string" ? data.error : null)
+                   || ("HTTP " + res.status);
+            // 혼잡(503)은 좀 더 끈질기게, 할당량 초과(429)는 기다려도 안 풀리니 한 번만
+            // 스키마를 못 알아듣는 모델이면 스키마를 빼고 곧바로 다시
+            if (스키마쓰기 && res.status === 400){
+              스키마쓰기 = false;
+              return 한번(시도);
+            }
+            var 한도 = (res.status === 429) ? 1 : (res.status === 503 ? 5 : 재시도_최대);
+            var 재시도가능 = (res.status === 429 || res.status === 500 || res.status === 503);
+            if (재시도가능 && 시도 < 한도){
+              // 5초, 10초, 20초, 30초, 30초
+              var 대기 = Math.min(30000, Math.pow(2, 시도) * 5000) + Math.random() * 1500;
+              if (onRetry) onRetry(시도, Math.round(대기 / 1000), res.status, msg, 한도);
+              return 잠깐(대기).then(function(){ return 한번(시도 + 1); });
+            }
+            var e = new Error(msg); e.status = res.status; throw e;
+          }
+          var c = data.candidates && data.candidates[0];
+          if (!c){
+            var 차단 = data.promptFeedback && data.promptFeedback.blockReason;
+            throw new Error(차단 ? ("안전 필터에 걸렸습니다. (" + 차단 + ")") : "응답이 비어 있습니다.");
+          }
+          if (c.finishReason === "MAX_TOKENS")
+            throw new Error("응답이 도중에 끊겼습니다. 생기부가 너무 길 수 있습니다.");
+          var parts = (c.content && c.content.parts) || [];
+          var text = parts.map(function(p){ return p.text || ""; }).join("");
+          if (!text) throw new Error("응답에 글이 없습니다.");
+          return text;
+        });
+      }, function(netErr){
+        // 네트워크 자체가 실패한 경우도 한 번은 더
+        if (시도 < 1){
+          if (onRetry) onRetry(시도, 3, 0, String(netErr && netErr.message || netErr));
+          return 잠깐(3000).then(function(){ return 한번(시도 + 1); });
+        }
+        var e2 = new Error(String(netErr && netErr.message || netErr));
+        e2.status = 0; throw e2;
+      });
+    }
+
+    return 한번(0);
+  }
+
+  /* 모델이 JSON을 살짝 어긋나게 뱉는 일이 흔합니다.
+     그대로 실패시키지 말고 흔한 어긋남은 바로잡아 봅니다. */
+  function parseJson(text){
+    var t = String(text || "").trim();
+    t = t.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
+
+    // 앞뒤에 설명이 붙은 경우 바깥 중괄호만 남긴다
+    var a = t.indexOf("{"), b = t.lastIndexOf("}");
+    if (a > 0 || (b > -1 && b < t.length - 1)) {
+      if (a > -1 && b > a) t = t.slice(a, b + 1);
+    }
+
+    try { return JSON.parse(t); } catch (e1) {}
+
+    // 흔한 어긋남 바로잡기
+    var u = t
+      .replace(/[\u201C\u201D]/g, '"')        // 둥근 따옴표
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/,\s*([}\]])/g, "$1")           // 닫기 앞의 쉼표
+      .replace(/"\s*\n\s*"([^"]+)"\s*:/g, '",\n"$1":')  // 줄바꿈 뒤 쉼표 누락
+      .replace(/}\s*{/g, "},{")                // 배열 안 쉼표 누락
+      .replace(/]\s*"/g, '],"');
+    try { return JSON.parse(u); } catch (e2) {}
+
+    // 끝이 잘린 경우 열린 괄호를 안쪽부터 닫아 본다
+    var 쌓임 = [], 따옴표 = false, 이스케이프 = false;
+    for (var i = 0; i < u.length; i++) {
+      var c = u[i];
+      if (이스케이프) { 이스케이프 = false; continue; }
+      if (c === "\\") { 이스케이프 = true; continue; }
+      if (c === '"') { 따옴표 = !따옴표; continue; }
+      if (따옴표) continue;
+      if (c === "{" || c === "[") 쌓임.push(c);
+      else if (c === "}" || c === "]") 쌓임.pop();
+    }
+    if (쌓임.length || 따옴표) {
+      var v = u;
+      if (따옴표) v += '"';                 // 문자열 한복판에서 끊긴 경우
+      v = v.replace(/,\s*$/, "");
+      for (var j = 쌓임.length - 1; j >= 0; j--) v += (쌓임[j] === "{" ? "}" : "]");
+      try { return JSON.parse(v); } catch (e3) {}
+    }
+
+    var err = new Error("JSON 형식이 어긋났습니다.");
+    err.raw = text;
+    throw err;
+  }
+
+  function setStatus2(msg, isError){
+    var el = $("status2");
+    el.textContent = msg || "";
+    el.className = "status" + (isError ? " error" : "");
+  }
+
+  function makeCard(이어붙이기){
+    var key = $("keyIn").value.trim();
+    var model = 모델읽기("modelSel", "modelIn");
+    if (!key){ setStatus2(중계서버 ? "접속 코드를 넣어주세요." : "API 키를 넣어주세요.", true); return; }
+    if (!cleanText){ setStatus2("먼저 생기부를 올려주세요.", true); return; }
+
+    var 개수 = parseInt($("countIn").value, 10) || 15;
+    var 기존제목 = null;
+    if (이어붙이기 && 카드 && 카드.활동)
+      기존제목 = 카드.활동.map(function(a){ return (a.출처 ? a.출처 + " — " : "") + (a.제목 || ""); });
+    var prompt = window.PROMPTS.카드프롬프트(
+      cleanText, $("univIn").value.trim(), $("majorIn").value.trim(), 개수, 기존제목);
+    setStatus2("");
+    $("rawWrap").style.display = "none";
+    $("loading2").style.display = "flex";
+    $("makeCardBtn").disabled = true;
+
+    callGemini(prompt, key, model, function(시도, 초, status, raw, 한도){
+      var 원인 = (status === 429) ? "요청이 너무 잦거나 할당량을 넘었습니다"
+               : (status === 0)  ? "구글 서버에 닿지 못했습니다"
+               : (status === 503 || status === 500) ? (model + " 모델이 붐빕니다")
+               : ("오류 " + status);
+      setStatus2(원인 + ". " + 초 + "초 뒤 다시 시도합니다. (" + (시도 + 1) + "/" + 한도 + ")");
+    }, 카드스키마)
+      .then(function(text){
+        setStatus2("");
+        var 새것 = parseJson(text);
+        if (이어붙이기 && 카드 && 카드.활동){
+          var 있는제목 = {};
+          카드.활동.forEach(function(a){ 있는제목[(a.제목||"").trim()] = true; });
+          (새것.활동 || []).forEach(function(a){
+            var t = (a.제목||"").trim();
+            if (t && !있는제목[t]){ 있는제목[t] = true; 카드.활동.push(a); }
+          });
+          (새것.빈틈 || []).forEach(function(g){
+            if ((카드.빈틈||[]).indexOf(g) === -1) (카드.빈틈 = 카드.빈틈 || []).push(g);
+          });
+          카드.활동.forEach(function(a,i){ a.id = "A" + (i+1); });
+        } else {
+          카드 = 새것;
+        }
+        var 안내 = $("cvLoaded");
+        if (안내) 안내.style.display = "none";
+        renderCard();
+      })
+      .catch(function(err){
+        var raw = String(err && err.message || err);
+        var st = err && err.status;
+        var m;
+        if (st === 401)
+          m = 중계서버 ? "접속 코드가 맞지 않습니다. 선생님께 받은 코드를 다시 확인하세요."
+                       : "API 키가 올바르지 않습니다.";
+        else if (st === 403)
+          m = "이 주소에서는 쓸 수 없습니다. 선생님께 알려진 주소로 접속했는지 확인하세요.";
+        else if (st === 429)
+          m = 중계서버 ? "오늘 쓸 수 있는 횟수를 다 썼거나 요청이 너무 잦습니다. 잠시 뒤 다시 해보세요."
+                       : "할당량을 넘었거나 요청이 너무 잦습니다. 기다려도 풀리지 않으면 AI Studio에서 결제 상태와 남은 할당량을 확인하세요.";
+        else if (st === 0 || /Failed to fetch|NetworkError/i.test(raw))
+          m = 중계서버 ? "중계 서버에 닿지 못했습니다. 인터넷 연결을 확인하거나 선생님께 알려주세요."
+                       : "구글 서버에 닿지 못했습니다. 주소창이 localhost인지, 인터넷이 되는지 확인하세요. 파일을 더블클릭해 연 경우에도 이 오류가 납니다.";
+        else if (/no longer available|deprecated|retired/i.test(raw))
+          m = "그 모델은 더 이상 쓸 수 없습니다. 모델 칸을 눌러 목록에서 다른 모델을 고르세요.";
+        else if (/API key not valid|API_KEY_INVALID/i.test(raw))
+          m = "API 키가 올바르지 않습니다.";
+        else if (/PERMISSION_DENIED|not enabled|billing/i.test(raw))
+          m = "이 키로는 쓸 수 없는 모델이거나 결제가 설정되지 않았습니다.";
+        else if (st === 503 || st === 500 || /overloaded|UNAVAILABLE|high demand/i.test(raw))
+          m = model + " 모델에 요청이 몰려 있습니다. 혼잡은 모델마다 따로이니, 모델 칸을 눌러 다른 모델로 바꿔보세요. 예를 들어 gemini-3.5-flash-lite 쪽이 대체로 한산합니다.";
+        else if (/not found|NOT_FOUND/i.test(raw))
+          m = "그 이름의 모델을 찾지 못했습니다. 모델 이름을 확인하세요.";
+        else if (/JSON/i.test(raw))
+          m = "응답을 읽지 못했습니다. 다시 만들기를 눌러보세요.";
+        else m = raw;
+        setStatus2(m, true);
+        $("rawErr").textContent = (st ? "HTTP " + st + " · " : "") + raw;
+        $("rawWrap").style.display = "";
+      })
+      .then(function(){
+        $("loading2").style.display = "none";
+        $("makeCardBtn").disabled = false;
+        $("cardMoreBtn").disabled = false;
+        $("cardMoreBtn").textContent = "활동 더 뽑기";
+      });
+  }
+
+  /* ---------------- 카드 그리기 ---------------- */
+  function renderCard(){
+    if (!카드) return;
+    var 표 = window.PROMPTS.난이도표[난이도];
+    $("cvMeta").textContent = [
+      ($("univIn").value.trim() || "대학 미지정"),
+      ($("majorIn").value.trim() || "학과 미지정"),
+      난이도 + "단계 " + 표.이름
+    ].join(" · ");
+
+    var dl = "";
+    if (카드.진로흐름) dl += "<dt>진로 흐름</dt><dd>" + escHtml(카드.진로흐름) + "</dd>";
+    if (카드.출결) dl += "<dt>출결</dt><dd>" + escHtml(카드.출결) + "</dd>";
+    var acts = 카드.활동 || [];
+    var 분포 = {};
+    acts.forEach(function(a){
+      var k = a.구분 || "구분 없음";
+      분포[k] = (분포[k] || 0) + 1;
+    });
+    var 분포글 = Object.keys(분포).map(function(k){ return k + " " + 분포[k]; }).join(" · ");
+    var 관련 = {};
+    acts.forEach(function(a){ var r = a.학과관련 || "표시 없음"; 관련[r] = (관련[r]||0)+1; });
+    var 관련글 = ["높음","보통","낮음","표시 없음"].filter(function(k){ return 관련[k]; })
+      .map(function(k){ return k + " " + 관련[k]; }).join(" · ");
+    if (관련글) dl += "<dt>학과 관련</dt><dd>" + escHtml(관련글) + "</dd>";
+    dl += "<dt>활동</dt><dd>" + acts.length + "개" + (분포글 ? " <span style=\'color:var(--ink-soft);font-size:12.5px\'>(" + escHtml(분포글) + ")</span>" : "") + "</dd>";
+    $("cvStrip").innerHTML = "<dl>" + dl + "</dl>";
+
+    var box = $("cvActs"); box.innerHTML = "";
+    acts.forEach(function(a){
+      var el = document.createElement("article");
+      el.className = "act";
+      var qs = (a.질문후보 || []).map(function(q){ return "<li>" + escHtml(q) + "</li>"; }).join("");
+      el.innerHTML =
+        '<div class="act-top"><h4>' + escHtml(a.제목 || "") + '</h4>' +
+        '<span class="src">' + escHtml(a.출처 || "") + '</span></div>' +
+        '<div class="badges">' +
+          (a.영역 ? '<span class="badge">' + escHtml(a.영역) + '</span>' : "") +
+          (a.학과관련 ? '<span class="badge r' + (a.학과관련 === "낮음" ? " low" : (a.학과관련 === "보통" ? " mid" : "")) + '">학과 ' + escHtml(a.학과관련) + '</span>' : "") +
+          (a.질문유형 ? '<span class="badge t">' + escHtml(a.질문유형) + '</span>' : "") +
+        '</div>' +
+        (a.요약 ? '<p class="sum">' + escHtml(a.요약) + '</p>' : "") +
+        (qs ? "<ul>" + qs + "</ul>" : "") +
+        (a.파고들지점 ? '<p class="probe"><b>파고들 지점</b>' + escHtml(a.파고들지점) + '</p>' : "");
+      box.appendChild(el);
+    });
+
+    var gaps = (카드.빈틈 || []);
+    $("cvGaps").innerHTML = gaps.length
+      ? "<h4>생기부에 잘 드러나지 않는 점</h4><ul>" + gaps.map(function(g){ return "<li>" + escHtml(g) + "</li>"; }).join("") + "</ul>"
+      : "";
+    $("cvGaps").style.display = gaps.length ? "" : "none";
+
+    show("cardview");
+    단계표시(2);
+  }
+
+  /* ---------------- 이벤트 ---------------- */
+  var dz = $("dropzone"), fi = $("fileInput");
+  dz.addEventListener("click", function(){ fi.click(); });
+  dz.addEventListener("keydown", function(e){ if (e.key === "Enter" || e.key === " "){ e.preventDefault(); fi.click(); } });
+  fi.addEventListener("change", function(){ if (fi.files && fi.files[0]) readPdf(fi.files[0]); });
+  ["dragenter","dragover"].forEach(function(ev){ dz.addEventListener(ev, function(e){ e.preventDefault(); dz.classList.add("over"); }); });
+  ["dragleave","drop"].forEach(function(ev){ dz.addEventListener(ev, function(e){ e.preventDefault(); dz.classList.remove("over"); }); });
+  dz.addEventListener("drop", function(e){
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (!f) return;
+    if (f.type !== "application/pdf" && !/\.pdf$/i.test(f.name)){ setStatus("PDF 파일만 읽을 수 있습니다.", true); return; }
+    readPdf(f);
+  });
+
+  /* ---------------- 저장해 둔 카드 불러오기 ---------------- */
+  function setLoadStatus(msg, isError){
+    var el = $("loadStatus");
+    el.textContent = msg || "";
+    el.className = "status" + (isError ? " error" : "");
+  }
+
+  function 카드불러오기(file){
+    var reader = new FileReader();
+    reader.onerror = function(){ setLoadStatus("파일을 열지 못했습니다.", true); };
+    reader.onload = function(){
+      var d;
+      try { d = JSON.parse(reader.result); }
+      catch(e){ setLoadStatus("면접 카드 파일이 아닌 것 같습니다. 저장할 때 받은 면접카드.json을 올려주세요.", true); return; }
+
+      if (!d || !d.활동 || !d.활동.length){
+        setLoadStatus("활동이 들어 있지 않습니다. 다른 파일인지 확인해 주세요.", true);
+        return;
+      }
+      // id가 없으면 붙여 준다 (손으로 고친 파일도 받아들이게)
+      d.활동.forEach(function(a, i){ if (!a.id) a.id = "A" + (i+1); });
+
+      카드 = { 진로흐름: d.진로흐름, 출결: d.출결, 활동: d.활동, 빈틈: d.빈틈 };
+      if (d.대학) $("univIn").value = d.대학;
+      if (d.학과) $("majorIn").value = d.학과;
+
+      // 생기부 본문은 없지만, 카드만으로 면접과 피드백은 굴러간다
+      cleanText = "";
+      setLoadStatus("");
+      renderCard();
+      setTimeout(function(){
+        var 안내 = $("cvLoaded");
+        if (안내) 안내.style.display = "";
+      }, 0);
+    };
+    reader.readAsText(file, "utf-8");
+  }
+
+  var lz = $("loadzone"), cfi = $("cardFileInput");
+  lz.addEventListener("click", function(){ cfi.click(); });
+  lz.addEventListener("keydown", function(e){
+    if (e.key === "Enter" || e.key === " "){ e.preventDefault(); cfi.click(); }
+  });
+  cfi.addEventListener("change", function(){ if (cfi.files && cfi.files[0]) 카드불러오기(cfi.files[0]); });
+  ["dragenter","dragover"].forEach(function(ev){
+    lz.addEventListener(ev, function(e){ e.preventDefault(); lz.classList.add("over"); });
+  });
+  ["dragleave","drop"].forEach(function(ev){
+    lz.addEventListener(ev, function(e){ e.preventDefault(); lz.classList.remove("over"); });
+  });
+  lz.addEventListener("drop", function(e){
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (!f) return;
+    if (!/\.json$/i.test(f.name) && f.type !== "application/json"){
+      setLoadStatus("JSON 파일만 불러올 수 있습니다.", true); return;
+    }
+    카드불러오기(f);
+  });
+
+  $("sampleBtn").addEventListener("click", function(){
+    rawText = SAMPLE; extraWords = [];
+    if (!$("nameIn").value) $("nameIn").value = "홍길동";
+    if (!$("schoolIn").value) $("schoolIn").value = "○○고등학교";
+    setStatus(""); rebuild();
+  });
+
+  $("addBtn").addEventListener("click", function(){
+    var v = $("addIn").value.trim(); if (!v) return;
+    extraWords.push(v); $("addIn").value = ""; rebuild();
+  });
+  $("addIn").addEventListener("keydown", function(e){ if (e.key === "Enter") $("addBtn").click(); });
+
+  $("editBtn").addEventListener("click", function(){
+    var ta = $("docEdit"), view = $("docText");
+    if (!editing){
+      ta.value = cleanText; ta.style.display = "block"; view.style.display = "none";
+      $("editBtn").textContent = "고치기 마치기"; editing = true; ta.focus();
+    } else {
+      cleanText = ta.value; ta.style.display = "none"; view.style.display = "block";
+      $("editBtn").textContent = "본문 직접 고치기"; editing = false;
+      renderDoc();
+      renderChecks(runChecks(cleanText, $("nameIn").value));
+      $("sheetMeta").textContent = cleanText.length.toLocaleString() + "자";
+    }
+  });
+
+  $("restartBtn").addEventListener("click", function(){
+    rawText = ""; cleanText = ""; extraWords = []; editing = false; 카드 = null;
+    setLoadStatus("");
+    cfi.value = "";
+    if ($("cvLoaded")) $("cvLoaded").style.display = "none";
+    $("docEdit").style.display = "none"; $("docText").style.display = "block";
+    $("editBtn").textContent = "본문 직접 고치기";
+    fi.value = ""; setStatus(""); show("setup"); 단계표시(1);
+  });
+
+  $("toStep2Btn").addEventListener("click", function(){
+    if (editing) $("editBtn").click();
+    renderLevels(); show("setup2"); 단계표시(2);
+    설정화면정리();
+  });
+  $("backToReviewBtn").addEventListener("click", function(){
+    if (cleanText){ show("review"); 단계표시(1); }
+    else if (카드){ show("cardview"); 단계표시(2); }
+    else { show("setup"); 단계표시(1); }
+  });
+  $("startFromSetupBtn").addEventListener("click", function(){ 면접시작(); });
+
+  /* 생기부 없이 카드만 불러온 사람은 카드 만들기가 필요 없다 */
+  function 설정화면정리(){
+    var 카드있음 = !!(카드 && 카드.활동 && 카드.활동.length);
+    var 생기부있음 = !!cleanText;
+    $("makeCardBtn").style.display = 생기부있음 ? "" : "none";
+    $("startFromSetupBtn").style.display = (카드있음 && !생기부있음) ? "" : "none";
+    $("countIn").closest(".field").style.display = 생기부있음 ? "" : "none";
+    $("backToReviewBtn").textContent = 생기부있음 ? "가린 결과로 돌아가기" : "카드로 돌아가기";
+  }
+  $("makeCardBtn").addEventListener("click", function(){ makeCard(false); });
+  $("cardBackBtn").addEventListener("click", function(){
+    renderLevels(); show("setup2"); 단계표시(2); 설정화면정리();
+  });
+  $("cardRedoBtn").addEventListener("click", function(){ show("setup2"); 단계표시(2); makeCard(false); });
+  $("cardMoreBtn").addEventListener("click", function(){
+    if (!cleanText){
+      show("setup"); 단계표시(1);
+      setStatus("활동을 더 뽑으려면 생기부가 필요합니다. 먼저 PDF를 올려주세요.", true);
+      return;
+    }
+    $("cardMoreBtn").disabled = true;
+    $("cardMoreBtn").textContent = "뽑는 중…";
+    makeCard(true);
+  });
+
+  /* ================= 음성 ================= */
+  /* 읽어주기와 받아쓰기 모두 브라우저 기능입니다. 밖으로 나가는 것이 없습니다. */
+  var TTS = window.speechSynthesis || null;
+  var 읽어주기켬 = true;
+  var 목소리들 = [];
+  var 지금읽는중 = null;
+
+  /* 한국어를 읽을 수 있는 목소리만 씁니다.
+     영어 목소리로 한국어를 읽히면 발음이 뭉개져 연습에 방해가 됩니다. */
+  function 목소리채우기(){
+    if (!TTS) return;
+    var all = TTS.getVoices() || [];
+    목소리들 = all.filter(function(v){
+      return /^ko([-_]|$)/i.test(v.lang || "") || /korean|한국/i.test(v.name || "");
+    });
+
+    var sel = $("voiceSel");
+    var 이전 = sel.value;
+    sel.innerHTML = "";
+
+    if (!목소리들.length){
+      var o0 = document.createElement("option");
+      o0.value = "-1";
+      o0.textContent = "한국어 목소리 없음";
+      sel.appendChild(o0);
+      sel.title = "윈도우 설정에서 시간 및 언어 → 음성으로 들어가 한국어 음성을 추가하세요.";
+      $("ttsBtn").textContent = "읽어주기 불가";
+      $("ttsBtn").setAttribute("aria-pressed", "false");
+      읽어주기켬 = false;
+      return;
+    }
+
+    목소리들.forEach(function(v, i){
+      var o = document.createElement("option");
+      o.value = String(i);
+      o.textContent = (v.name || "목소리 " + (i+1))
+        .replace(/^Microsoft\s+/, "")
+        .replace(/^Google\s+/, "")
+        .replace(/\s*-\s*Korean.*$/i, "")
+        .replace(/\s*\(.*?\)\s*$/, "");
+      sel.appendChild(o);
+    });
+    if (이전 && sel.querySelector('option[value="' + 이전 + '"]')) sel.value = 이전;
+    sel.title = "한국어 목소리 " + 목소리들.length + "개";
+  }
+
+  if (TTS){
+    목소리채우기();
+    TTS.onvoiceschanged = 목소리채우기;
+  } else {
+    $("ttsBtn").style.display = "none";
+    $("voiceSel").style.display = "none";
+    $("rateSel").style.display = "none";
+    읽어주기켬 = false;
+  }
+
+  function 읽기(글){
+    if (!TTS || !읽어주기켬 || !글) return;
+    try {
+      TTS.cancel();
+      var u = new SpeechSynthesisUtterance(글);
+      var vi = parseInt($("voiceSel").value, 10);
+      if (목소리들[vi]) u.voice = 목소리들[vi];
+      u.lang = "ko-KR";   // 목소리가 무엇이든 한국어로 읽게 한다
+      u.rate = parseFloat($("rateSel").value) || 1;
+      u.pitch = 1;
+      지금읽는중 = u;
+      TTS.speak(u);
+    } catch (e) { /* 읽어주기는 없어도 면접은 굴러갑니다 */ }
+  }
+
+  function 읽기멈춤(){ if (TTS) { try { TTS.cancel(); } catch(e){} } }
+
+  $("ttsBtn").addEventListener("click", function(){
+    읽어주기켬 = !읽어주기켬;
+    this.setAttribute("aria-pressed", String(읽어주기켬));
+    this.textContent = 읽어주기켬 ? "읽어주기 켬" : "읽어주기 끔";
+    if (!읽어주기켬) 읽기멈춤();
+  });
+  $("replayBtn").addEventListener("click", function(){ 읽기($("qText").textContent); });
+
+  /* 받아쓰기 */
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  var 인식 = null, 듣는중 = false, 확정글 = "";
+
+  function 마이크준비(){
+    if (!SR) return;
+    $("micBtn").style.display = "";
+    인식 = new SR();
+    인식.lang = "ko-KR";
+    인식.continuous = true;
+    인식.interimResults = true;
+
+    인식.onresult = function(e){
+      var 임시 = "";
+      for (var i = e.resultIndex; i < e.results.length; i++){
+        var t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) 확정글 += t;
+        else 임시 += t;
+      }
+      $("ansIn").value = (확정글 + 임시).trim();
+    };
+    인식.onerror = function(e){
+      듣기멈춤();
+      var m = (e.error === "not-allowed" || e.error === "service-not-allowed")
+        ? "마이크 권한이 필요합니다. 주소창 왼쪽 자물쇠를 눌러 허용해 주세요."
+        : (e.error === "no-speech") ? "소리가 들리지 않았습니다. 다시 눌러 보세요."
+        : "받아쓰기에 문제가 생겼습니다. 직접 입력해 주세요.";
+      $("ivStatus").className = "status error";
+      $("ivStatus").textContent = m;
+    };
+    인식.onend = function(){
+      // 잠깐 쉬었다 다시 시작해야 앞머리가 잘리지 않는다
+      if (듣는중) setTimeout(function(){
+        if (듣는중) { try { 인식.start(); } catch(e){} }
+      }, 250);
+    };
+  }
+
+  function 듣기시작(){
+    if (!인식) return;
+    읽기멈춤();
+    확정글 = $("ansIn").value ? $("ansIn").value + " " : "";
+    듣는중 = true;
+    $("micBtn").classList.add("rec");
+    $("micBtn").textContent = "그만 말하기";
+    $("ansTip").textContent = "Ctrl 또는 Cmd + Enter";
+    $("ivStatus").className = "status";
+    $("ivStatus").textContent = "듣고 있습니다. 한 문장씩 또박또박 말하면 더 잘 알아듣습니다.";
+    try { 인식.start(); } catch(e){}
+  }
+
+  function 듣기멈춤(){
+    듣는중 = false;
+    $("micBtn").classList.remove("rec");
+    $("micBtn").textContent = "말하기";
+    if ($("ansIn").value.trim()) $("ansTip").textContent = "틀리게 받아썼으면 고친 뒤 보내세요";
+    if ($("ivStatus").className === "status") $("ivStatus").textContent = "";
+    if (인식) { try { 인식.stop(); } catch(e){} }
+  }
+
+  마이크준비();
+  $("micBtn").addEventListener("click", function(){ 듣는중 ? 듣기멈춤() : 듣기시작(); });
+
+  /* ================= 3단계 · 면접 진행 ================= */
+  var 면접 = null;
+  var 시계 = null;
+
+  function 두자리(n){ return (n < 10 ? "0" : "") + n; }
+
+  function 시계갱신(){
+    if (!면접 || 면접.끝남) return;
+    var 경과 = Math.floor((Date.now() - 면접.시작) / 1000);
+    var 남음 = window.PROMPTS.CONFIG.목표시간_분 * 60 - 경과;
+    var el = $("ivClock");
+    var 음수 = 남음 < 0;
+    var v = Math.abs(남음);
+    el.textContent = (음수 ? "+" : "") + 두자리(Math.floor(v / 60)) + ":" + 두자리(v % 60);
+    el.classList.toggle("low", 남음 <= 120);
+  }
+
+  function 경과초(){ return Math.floor((Date.now() - 면접.시작) / 1000); }
+
+  function 면접시작(){
+    if (!카드 || !카드.활동 || !카드.활동.length){ return; }
+    if (!$("keyIn").value.trim()){
+      show("setup2"); 단계표시(2);
+      renderLevels(); 설정화면정리();
+      setStatus2(중계서버 ? "면접을 보려면 접속 코드가 필요합니다. 코드를 넣고 아래 면접 시작을 누르세요."
+                          : "면접을 보려면 API 키가 필요합니다. 키를 넣고 아래 면접 시작을 누르세요.", true);
+      $("keyIn").focus();
+      return;
+    }
+    var 뽑힌 = window.PROMPTS.면접용뽑기(카드.활동, 12);
+    면접 = {
+      대학: $("univIn").value.trim(), 학과: $("majorIn").value.trim(),
+      카드: { 진로흐름: 카드.진로흐름, 출결: 카드.출결, 활동: 뽑힌 },
+      대화: [], 문항수: 0, 꼬리횟수: 0, 사용한활동: [],
+      시작: Date.now(), 끝남: false
+    };
+    $("ivLevelSel").value = String(난이도);
+    $("ivDone").style.display = "none";
+    $("fb").style.display = "none";
+    $("fbStatus").textContent = "";
+    $("fbBtn").textContent = "피드백 받기";
+    피드백 = null;
+    $("ansbox").style.display = "";
+    $("ivLog").style.display = "none";
+    $("ivLogBody").innerHTML = "";
+    $("ansIn").value = "";
+    읽기멈춤();
+    if (듣는중) 듣기멈춤();
+    $("qText").textContent = "면접을 준비하고 있습니다…";
+    $("qTag").textContent = "";
+    $("replayBtn").style.display = "none";
+    $("ivStatus").textContent = "";
+    바갱신();
+    show("iv"); 단계표시(3);
+    if (시계) clearInterval(시계);
+    시계 = setInterval(시계갱신, 1000);
+    시계갱신();
+    다음턴();
+  }
+
+  function 바갱신(){
+    var 표 = window.PROMPTS.난이도표[난이도];
+    $("ivLevel").textContent = 난이도 + "단계 · " + 표.이름;
+    $("ivCount").textContent = 면접 ? (면접.문항수 + "번째 질문") : "";
+  }
+
+  function 로그그리기(){
+    var box = $("ivLogBody"); box.innerHTML = "";
+    면접.대화.forEach(function(t){
+      var d = document.createElement("div");
+      d.className = "turn" + (t.역할 === "학생" ? " me" : "");
+      d.innerHTML = '<p class="r">' + (t.역할 === "학생" ? "나" : "면접관") + '</p><p class="m">' + escHtml(t.말) + "</p>";
+      box.appendChild(d);
+    });
+    $("ivLog").style.display = 면접.대화.length > 2 ? "" : "none";
+  }
+
+  function 답변잠금(잠글까){
+    $("ansIn").disabled = 잠글까;
+    $("ansBtn").disabled = 잠글까;
+    $("dunnoBtn").disabled = 잠글까;
+  }
+
+  function 다음턴(){
+    답변잠금(true);
+    $("ivStatus").textContent = "";
+    var key = $("keyIn").value.trim();
+    var model = 모델읽기("modelSel", "modelIn");
+    var 상태 = {
+      문항수: 면접.문항수,
+      경과시간초: 경과초(),
+      사용한활동: 면접.사용한활동,
+      꼬리횟수: 면접.꼬리횟수,
+      대화: 면접.대화
+    };
+    var prompt = window.PROMPTS.진행프롬프트(면접.카드, 상태, 난이도, 면접.대학, 면접.학과);
+
+    callGemini(prompt, key, model, function(시도, 초, status, raw, 한도){
+      $("ivStatus").textContent = "잠시 기다려 주세요. " + 초 + "초 뒤 다시 시도합니다. (" + (시도+1) + "/" + 한도 + ")";
+    }, 진행스키마).then(function(text){
+      var r = parseJson(text);
+      $("ivStatus").textContent = "";
+      질문받기(r);
+    }).catch(function(err){
+      $("ivStatus").className = "status error";
+      $("ivStatus").textContent = "질문을 받지 못했습니다. " + String(err && err.message || err);
+      답변잠금(false);
+    });
+  }
+
+  function 질문받기(r){
+    var 행동 = r.행동 || "새질문";
+    if (행동 === "마무리"){
+      면접끝(r.질문 || "면접을 마치겠습니다. 수고하셨습니다.");
+      return;
+    }
+    if (행동 === "꼬리질문") 면접.꼬리횟수 += 1;
+    else {
+      면접.문항수 += 1;
+      면접.꼬리횟수 = 0;
+      if (r.근거활동 && 면접.사용한활동.indexOf(r.근거활동) === -1)
+        면접.사용한활동.push(r.근거활동);
+    }
+    면접.대화.push({ 역할: "면접관", 말: r.질문 || "" });
+    $("qText").textContent = r.질문 || "";
+    var tags = [];
+    if (행동 === "꼬리질문") tags.push("꼬리질문");
+    else if (행동 === "마지막발언") tags.push("마지막 발언");
+    if (r.질문유형) tags.push(r.질문유형);
+    $("qTag").textContent = tags.join(" · ");
+    $("ansIn").value = "";
+    바갱신();
+    로그그리기();
+    답변잠금(false);
+    읽기(r.질문 || "");
+    $("replayBtn").style.display = TTS ? "" : "none";
+    $("ansIn").focus();
+  }
+
+  function 답변보내기(말){
+    if (!면접 || 면접.끝남) return;
+    var v = (말 || $("ansIn").value).trim();
+    if (!v) return;
+    if (듣는중) 듣기멈춤();
+    면접.대화.push({ 역할: "학생", 말: v });
+    $("ansIn").value = "";
+    로그그리기();
+    다음턴();
+  }
+
+  function 면접끝(맺음말){
+    면접.끝남 = true;
+    if (시계) clearInterval(시계);
+    if (맺음말) 면접.대화.push({ 역할: "면접관", 말: 맺음말 });
+    if (듣는중) 듣기멈춤();
+    $("qText").textContent = 맺음말 || "면접을 마치겠습니다.";
+    $("qTag").textContent = "";
+    $("replayBtn").style.display = "none";
+    읽기(맺음말 || "면접을 마치겠습니다.");
+    $("ansbox").style.display = "none";
+    $("ivDone").style.display = "";
+    $("ivLog").style.display = "";
+    $("ivLog").open = true;
+    var 분 = Math.floor(경과초() / 60), 초 = 경과초() % 60;
+    $("doneSub").textContent = "질문 " + 면접.문항수 + "개 · " + 분 + "분 " + 초 + "초 · " + 난이도 + "단계";
+    로그그리기();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  /* ================= 4단계 · 피드백 ================= */
+  var 피드백 = null;
+
+  function 피드백받기(){
+    if (!면접 || !면접.대화.length) return;
+    $("fbBtn").disabled = true;
+    $("fbLoading").style.display = "flex";
+    $("fbStatus").textContent = "";
+    $("fbStatus").className = "status";
+    $("fbRawWrap").style.display = "none";
+
+    var key = $("keyIn").value.trim();
+    var model = 모델읽기("fbModelSel2", "fbModelIn2");
+    var prompt = window.PROMPTS.평가프롬프트(면접.카드, 면접.대화, 난이도, 면접.대학, 면접.학과);
+
+    callGemini(prompt, key, model, function(시도, 초, status, raw, 한도){
+      $("fbStatus").textContent = "잠시 기다려 주세요. " + 초 + "초 뒤 다시 시도합니다. (" + (시도+1) + "/" + 한도 + ")";
+    }, 평가스키마).then(function(text){
+      피드백 = parseJson(text);
+      $("fbStatus").textContent = "";
+      피드백그리기();
+    }).catch(function(err){
+      $("fbStatus").className = "status error";
+      var msg = String(err && err.message || err);
+      if (/JSON/i.test(msg)) msg = "모델이 형식을 어긋나게 답했습니다. 다시 눌러보시거나 피드백 모델을 한 단계 올려보세요.";
+      $("fbStatus").textContent = "피드백을 받지 못했습니다. " + msg;
+      if (err && err.raw){
+        $("fbStatus").textContent += " (아래에 받은 내용을 그대로 두었습니다)";
+        var pre = $("fbRaw");
+        pre.textContent = String(err.raw).slice(0, 4000);
+        pre.parentNode.style.display = "";
+      }
+    }).then(function(){
+      $("fbLoading").style.display = "none";
+      $("fbBtn").disabled = false;
+    });
+  }
+
+  function 피드백그리기(){
+    if (!피드백) return;
+
+    var g = $("fbGrades"); g.innerHTML = "";
+    (피드백.영역등급 || []).forEach(function(x){
+      var 등급 = x.등급 || "";
+      var cls = ["상","중","하"].indexOf(등급) >= 0 ? ("g" + 등급) : "gna";
+      var d = document.createElement("div");
+      d.className = "grade " + cls;
+      d.innerHTML = '<div class="top"><span class="nm">' + escHtml(x.영역 || "") + '</span>' +
+                    '<span class="gv">' + escHtml(등급 || "확인 안 됨") + "</span></div>" +
+                    "<p>" + escHtml(x.이유 || "") + "</p>";
+      g.appendChild(d);
+    });
+
+    var pbox = $("fbPoints"); pbox.innerHTML = "";
+    var pts = 피드백.지적사항 || [];
+    if (!pts.length){
+      pbox.innerHTML = '<div class="pt"><p class="why">특별히 짚을 곳이 없었습니다.</p></div>';
+    }
+    pts.forEach(function(x){
+      var d = document.createElement("div");
+      d.className = "pt";
+      d.innerHTML =
+        (x.문항 ? '<p class="qq">' + escHtml(x.문항) + "</p>" : "") +
+        (x.문제된답 ? '<p class="said">' + escHtml(x.문제된답) + "</p>" : "") +
+        (x.왜 ? '<p class="why">' + escHtml(x.왜) + "</p>" : "") +
+        (x.이렇게 ? '<p class="fix"><b>이렇게 말했다면</b>' + escHtml(x.이렇게) + "</p>" : "");
+      pbox.appendChild(d);
+    });
+
+    var good = 피드백.잘한점 || [];
+    $("fbGood").innerHTML = "<h4>잘한 점</h4>" +
+      (good.length ? "<ul>" + good.map(function(t){ return "<li>" + escHtml(t) + "</li>"; }).join("") + "</ul>"
+                   : "<p>—</p>");
+    $("fbNext").innerHTML = "<h4>다음 연습에서</h4><p>" + escHtml(피드백.다음연습 || "—") + "</p>";
+
+    $("fb").style.display = "";
+    단계표시(4);
+    $("fbBtn").textContent = "피드백 다시 받기";
+    $("fb").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function 피드백글(){
+    var 표 = window.PROMPTS.난이도표[난이도];
+    var L = ["모의 면접 피드백", ""];
+    L.push("지원: " + (면접.대학 || "-") + " " + (면접.학과 || "-"));
+    L.push("난이도: " + 난이도 + "단계 " + 표.이름 + " · 질문 " + 면접.문항수 + "개");
+    L.push("", "── 영역별 평가 ──", "");
+    (피드백.영역등급 || []).forEach(function(x){
+      L.push("[" + (x.등급 || "확인 안 됨") + "] " + x.영역);
+      L.push("    " + (x.이유 || ""));
+    });
+    L.push("", "── 고칠 곳 ──", "");
+    (피드백.지적사항 || []).forEach(function(x, i){
+      L.push((i+1) + ". " + (x.문항 || ""));
+      if (x.문제된답) L.push("   내 답: " + x.문제된답);
+      if (x.왜)      L.push("   왜:   " + x.왜);
+      if (x.이렇게)  L.push("   이렇게: " + x.이렇게);
+      L.push("");
+    });
+    L.push("── 잘한 점 ──", "");
+    (피드백.잘한점 || []).forEach(function(t){ L.push("· " + t); });
+    L.push("", "── 다음 연습에서 ──", "", 피드백.다음연습 || "");
+    L.push("", "", "── 면접 기록 ──", "");
+    면접.대화.forEach(function(t){
+      L.push((t.역할 === "면접관" ? "면접관  " : "나      ") + t.말);
+    });
+    return L.join("\n");
+  }
+
+  function 파일받기(이름, 내용){
+    var blob = new Blob([내용], { type: "text/plain;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = 이름;
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+  }
+
+  $("fbBtn").addEventListener("click", 피드백받기);
+  $("fbSaveBtn").addEventListener("click", function(){ 파일받기("모의면접_피드백.txt", 피드백글()); });
+  $("fbAgainBtn").addEventListener("click", function(){ 면접시작(); });
+  $("fbCardBtn").addEventListener("click", function(){ show("cardview"); 단계표시(2); });
+
+  $("startIvBtn").addEventListener("click", 면접시작);
+  $("ansBtn").addEventListener("click", function(){ 답변보내기(); });
+  $("dunnoBtn").addEventListener("click", function(){ 답변보내기("잘 모르겠습니다."); });
+  $("ansIn").addEventListener("keydown", function(e){
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter"){ e.preventDefault(); 답변보내기(); }
+  });
+  $("ivStopBtn").addEventListener("click", function(){
+    if (면접 && !면접.끝남) 면접끝("면접을 여기서 마치겠습니다.");
+  });
+  $("ivLevelSel").addEventListener("change", function(){
+    난이도 = parseInt(this.value, 10) || 2;
+    바갱신();
+  });
+  $("doneAgainBtn").addEventListener("click", 면접시작);
+  $("doneCardBtn").addEventListener("click", function(){ show("cardview"); 단계표시(2); });
+  $("doneSaveBtn").addEventListener("click", function(){
+    var 표 = window.PROMPTS.난이도표[난이도];
+    var txt = ["모의 면접 기록",
+      "난이도: " + 난이도 + "단계 " + 표.이름,
+      "질문 수: " + 면접.문항수,
+      "걸린 시간: " + Math.floor(경과초()/60) + "분 " + (경과초()%60) + "초",
+      "", "─────────────", ""
+    ].concat(면접.대화.map(function(t){
+      return (t.역할 === "면접관" ? "면접관  " : "나      ") + t.말;
+    })).join("\n");
+    파일받기("모의면접_기록.txt", txt);
+  });
+
+  $("cardSaveBtn").addEventListener("click", function(){
+    var 담을것 = {
+      형식: "면접카드",
+      판: 1,
+      만든날: new Date().toISOString().slice(0, 10),
+      대학: $("univIn").value.trim(),
+      학과: $("majorIn").value.trim(),
+      진로흐름: 카드.진로흐름,
+      출결: 카드.출결,
+      활동: 카드.활동,
+      빈틈: 카드.빈틈
+    };
+    var blob = new Blob([JSON.stringify(담을것, null, 2)], { type: "application/json;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "면접카드.json";
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+  });
+
+})();
+</script>
+</body>
+</html>
