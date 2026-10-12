@@ -439,7 +439,7 @@
     </div>
 
     <div class="notice">
-      <strong>여기서부터 내용이 밖으로 나갑니다.</strong> 가린 뒤의 본문이 <span id="어디로">Gemini</span>로 전송됩니다. 원본 PDF는 여전히 이 컴퓨터를 벗어나지 않지만, 정제된 글은 전송되니 왼쪽 점검을 통과했는지 확인하고 넘어가세요.
+      <strong>여기서부터 내용이 밖으로 나갑니다.</strong> 가린 뒤의 본문이 <span id="어디로">Gemini</span>로 전송됩니다. 면접에서 녹음해서 답하면 그 음성도 함께 전송됩니다. 원본 PDF는 여전히 이 컴퓨터를 벗어나지 않지만, 정제된 글은 전송되니 왼쪽 점검을 통과했는지 확인하고 넘어가세요.
     </div>
   </section>
 
@@ -475,6 +475,12 @@
         <option value="0.85">느리게</option>
         <option value="1" selected>보통</option>
         <option value="1.15">빠르게</option>
+      </select>
+      <label for="inputMode" style="font-size:12.5px">답변</label>
+      <select id="inputMode" title="답변을 어떻게 입력할지">
+        <option value="rec">녹음해서 받아쓰기</option>
+        <option value="live">실시간 받아쓰기</option>
+        <option value="type">타이핑만</option>
       </select>
       <label for="ivLevelSel" style="font-size:12.5px">난이도</label>
       <select id="ivLevelSel">
@@ -539,6 +545,8 @@
       <h3 class="fb-h">고칠 곳</h3>
       <div id="fbPoints"></div>
 
+      <div class="card" id="fbTell" style="display:none;margin-top:26px"></div>
+
       <div class="twocol">
         <div class="card" id="fbGood"></div>
         <div class="card" id="fbNext"></div>
@@ -567,7 +575,7 @@
        예) var 중계서버 = "https://interview-proxy.아이디.workers.dev";
      비워 두면 학생이 각자 자기 API 키를 넣는 방식으로 동작합니다.
      ===================================================================== */
-  var 중계서버 = "https://interview-mocha-seven.vercel.app/api/gemini";
+  var 중계서버 = "";
 
   /* 상태 — 메모리에만. localStorage 등 저장소를 쓰지 않습니다. */
   var rawText = "", cleanText = "", extraWords = [], editing = false;
@@ -610,6 +618,19 @@
     required: ["진로흐름","활동"]
   };
 
+  var 받아쓰기스키마 = {
+    type: "OBJECT",
+    properties: {
+      "받아쓴글": 글,
+      "말하기": {
+        type: "OBJECT",
+        properties: { "속도": 글, "머뭇거림": 글, "또렷함": 글, "한마디": 글 },
+        required: ["속도", "머뭇거림", "또렷함", "한마디"]
+      }
+    },
+    required: ["받아쓴글", "말하기"]
+  };
+
   var 진행스키마 = {
     type: "OBJECT",
     properties: {
@@ -638,6 +659,7 @@
         }
       },
       "잘한점": { type: "ARRAY", items: 글 },
+      "전달": 글,
       "다음연습": 글
     },
     required: ["영역등급","지적사항","다음연습"]
@@ -929,7 +951,8 @@
 
   function 잠깐(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
 
-  function callGemini(prompt, key, model, onRetry, schema){
+  function callGemini(prompt, key, model, onRetry, schema, 옵션){
+    옵션 = 옵션 || {};
     var 서버씀 = !!중계서버;
     var url = 서버씀
       ? 중계서버
@@ -938,12 +961,16 @@
     var 스키마쓰기 = !!schema;   // 모델이 스키마를 못 받으면 한 번 빼고 다시 시도한다
 
     function 한번(시도){
-      var cfg = { temperature: 0.4, responseMimeType: "application/json" };
+      var cfg = {
+        temperature: (옵션.temperature === undefined ? 0.4 : 옵션.temperature),
+        responseMimeType: "application/json"
+      };
       if (스키마쓰기) cfg.responseSchema = schema;
       var 머리 = { "Content-Type": "application/json" };
       if (서버씀) 머리["X-Class-Code"] = key;
+      var 조각 = [{ text: prompt }].concat(옵션.parts || []);
       var 몸 = {
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        contents: [{ role: "user", parts: 조각 }],
         generationConfig: cfg
       };
       if (서버씀) 몸.model = model;
@@ -957,6 +984,8 @@
             var msg = (data && data.error && data.error.message)
                    || (data && typeof data.error === "string" ? data.error : null)
                    || ("HTTP " + res.status);
+            var 원인 = data && data.원인;
+            var 거친곳 = data && data.거친곳;
             // 혼잡(503)은 좀 더 끈질기게, 할당량 초과(429)는 기다려도 안 풀리니 한 번만
             // 스키마를 못 알아듣는 모델이면 스키마를 빼고 곧바로 다시
             if (스키마쓰기 && res.status === 400){
@@ -971,7 +1000,9 @@
               if (onRetry) onRetry(시도, Math.round(대기 / 1000), res.status, msg, 한도);
               return 잠깐(대기).then(function(){ return 한번(시도 + 1); });
             }
-            var e = new Error(msg); e.status = res.status; throw e;
+            var e = new Error(msg);
+            e.status = res.status; e.원인 = 원인; e.거친곳 = 거친곳;
+            throw e;
           }
           var c = data.candidates && data.candidates[0];
           if (!c){
@@ -1102,11 +1133,16 @@
         var raw = String(err && err.message || err);
         var st = err && err.status;
         var m;
-        if (st === 401)
-          m = 중계서버 ? "접속 코드가 맞지 않습니다. 선생님께 받은 코드를 다시 확인하세요."
-                       : "API 키가 올바르지 않습니다.";
-        else if (st === 403)
-          m = "이 주소에서는 쓸 수 없습니다. 선생님께 알려진 주소로 접속했는지 확인하세요.";
+        if (st === 401 && err && err.원인 === "접속코드")
+          m = "접속 코드가 맞지 않습니다. 선생님께 받은 코드를 다시 확인하세요.";
+        else if (st === 401 || st === 403){
+          if (err && err.원인 === "위쪽")
+            m = "서버는 통과했는데 " + (err.거친곳 || "그다음 단계") + "에서 막혔습니다. 선생님께 이 화면을 보여주세요.";
+          else if (!중계서버)
+            m = "API 키가 올바르지 않습니다.";
+          else
+            m = "인증에서 막혔습니다. 선생님께 이 화면을 보여주세요.";
+        }
         else if (st === 429)
           m = 중계서버 ? "오늘 쓸 수 있는 횟수를 다 썼거나 요청이 너무 잦습니다. 잠시 뒤 다시 해보세요."
                        : "할당량을 넘었거나 요청이 너무 잦습니다. 기다려도 풀리지 않으면 AI Studio에서 결제 상태와 남은 할당량을 확인하세요.";
@@ -1423,13 +1459,20 @@
   });
   $("replayBtn").addEventListener("click", function(){ 읽기($("qText").textContent); });
 
-  /* 받아쓰기 */
+  /* =====================================================================
+     답변 입력 방법 세 가지
+       녹음  — 다 말한 뒤 녹음을 통째로 Gemini에 보내 받아쓴다. 가장 정확하다.
+       실시간 — 브라우저가 말하는 대로 받아쓴다. 공짜지만 전문 용어에 약하다.
+       타이핑 — 마이크를 쓰지 않는다.
+     ===================================================================== */
+  var 입력방법 = "rec";
+
+  /* ---------- 실시간 받아쓰기 (브라우저) ---------- */
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
   var 인식 = null, 듣는중 = false, 확정글 = "";
 
   function 마이크준비(){
     if (!SR) return;
-    $("micBtn").style.display = "";
     인식 = new SR();
     인식.lang = "ko-KR";
     인식.continuous = true;
@@ -1466,8 +1509,7 @@
     읽기멈춤();
     확정글 = $("ansIn").value ? $("ansIn").value + " " : "";
     듣는중 = true;
-    $("micBtn").classList.add("rec");
-    $("micBtn").textContent = "그만 말하기";
+    마이크버튼(true);
     $("ansTip").textContent = "Ctrl 또는 Cmd + Enter";
     $("ivStatus").className = "status";
     $("ivStatus").textContent = "듣고 있습니다. 한 문장씩 또박또박 말하면 더 잘 알아듣습니다.";
@@ -1476,15 +1518,233 @@
 
   function 듣기멈춤(){
     듣는중 = false;
-    $("micBtn").classList.remove("rec");
-    $("micBtn").textContent = "말하기";
+    마이크버튼(false);
     if ($("ansIn").value.trim()) $("ansTip").textContent = "틀리게 받아썼으면 고친 뒤 보내세요";
     if ($("ivStatus").className === "status") $("ivStatus").textContent = "";
     if (인식) { try { 인식.stop(); } catch(e){} }
   }
 
-  마이크준비();
-  $("micBtn").addEventListener("click", function(){ 듣는중 ? 듣기멈춤() : 듣기시작(); });
+  /* ---------- 녹음해서 받아쓰기 ---------- */
+  var 녹음됨 = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+  var 녹음기 = null, 소리줄 = null, 조각들 = [], 녹음중 = false;
+  var 녹음시작시각 = 0, 녹음시계 = null, 받아쓰는중 = false;
+  var 최대녹음초 = 180;          // 3분. 그보다 길면 저절로 멈춘다
+  var 말하기기록 = [];            // 평가에 넘길 관찰 기록
+
+  function 녹음형식(){
+    var 후보 = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"];
+    for (var i = 0; i < 후보.length; i++){
+      if (window.MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(후보[i])) return 후보[i];
+    }
+    return "";
+  }
+
+  /* 생기부에서 나온 말들을 받아쓰기 힌트로 넘긴다.
+     CBAM 같은 말은 미리 알려 주지 않으면 어떤 받아쓰기도 못 알아듣는다. */
+  function 들릴만한말(){
+    if (!면접 || !면접.카드) return [];
+    var 모음 = {}, 담기 = function(w){
+      w = String(w || "").trim();
+      if (w.length >= 2 && w.length <= 30) 모음[w] = 1;
+    };
+    (면접.카드.활동 || []).forEach(function(a){
+      담기(a.제목);
+      var 글자 = [a.요약, a.파고들지점].concat(a.질문후보 || []).join(" ");
+      // 영문 낱말과 약어
+      (글자.match(/[A-Za-z][A-Za-z0-9-]{1,}/g) || []).forEach(담기);
+      // 제도·이론처럼 생긴 한국어 낱말
+      (글자.match(/[가-힣]{2,10}(?:법|제도|이론|정리|효과|지수|협정|조약|모형|가설)/g) || []).forEach(담기);
+    });
+    if (면접.학과) 담기(면접.학과);
+    return Object.keys(모음);
+  }
+
+  function blob을base64로(blob){
+    return new Promise(function(풀기, 깨기){
+      var r = new FileReader();
+      r.onerror = function(){ 깨기(new Error("녹음을 읽지 못했습니다.")); };
+      r.onload = function(){
+        var s = String(r.result);
+        var i = s.indexOf(",");
+        풀기(i < 0 ? "" : s.slice(i + 1));
+      };
+      r.readAsDataURL(blob);     // 큰 파일도 안전하게 base64 로 바꾼다
+    });
+  }
+
+  function 녹음시계갱신(){
+    var 흐름 = Math.floor((Date.now() - 녹음시작시각) / 1000);
+    var 남음 = 최대녹음초 - 흐름;
+    $("ivStatus").className = "status";
+    $("ivStatus").textContent = "녹음 중 " + 두자리(Math.floor(흐름/60)) + ":" + 두자리(흐름%60) +
+      (남음 <= 30 ? " · " + 남음 + "초 뒤 저절로 멈춥니다" : " · 다 말했으면 녹음 끝을 누르세요");
+    if (남음 <= 0) 녹음끝();
+  }
+
+  function 녹음시작(){
+    if (녹음중 || 받아쓰는중) return;
+    읽기멈춤();
+    var 형식 = 녹음형식();
+    navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+    }).then(function(줄){
+      소리줄 = 줄;
+      조각들 = [];
+      try {
+        녹음기 = new MediaRecorder(줄, 형식 ? { mimeType: 형식, audioBitsPerSecond: 24000 } : {});
+      } catch(e){
+        녹음기 = new MediaRecorder(줄);
+      }
+      녹음기.ondataavailable = function(e){ if (e.data && e.data.size) 조각들.push(e.data); };
+      녹음기.onstop = 녹음정리;
+      녹음기.start();
+      녹음중 = true;
+      녹음시작시각 = Date.now();
+      마이크버튼(true);
+      $("ansTip").textContent = "말이 끝나면 녹음 끝을 누르세요";
+      녹음시계갱신();
+      녹음시계 = setInterval(녹음시계갱신, 1000);
+    }).catch(function(e){
+      $("ivStatus").className = "status error";
+      $("ivStatus").textContent = (e && e.name === "NotAllowedError")
+        ? "마이크 권한이 필요합니다. 주소창 왼쪽 자물쇠를 눌러 허용해 주세요."
+        : "마이크를 열지 못했습니다. 직접 입력해 주세요.";
+      마이크버튼(false);
+    });
+  }
+
+  function 녹음끝(){
+    if (!녹음중) return;
+    녹음중 = false;
+    if (녹음시계) { clearInterval(녹음시계); 녹음시계 = null; }
+    마이크버튼(false);
+    try { 녹음기.stop(); } catch(e){ 녹음정리(); }
+  }
+
+  function 줄닫기(){
+    if (소리줄){ 소리줄.getTracks().forEach(function(t){ try { t.stop(); } catch(e){} }); 소리줄 = null; }
+  }
+
+  function 녹음정리(){
+    줄닫기();
+    var 잰시간 = (Date.now() - 녹음시작시각) / 1000;
+    var 초 = Math.max(1, Math.round(잰시간));
+    var 크기 = 조각들.reduce(function(a, b){ return a + (b.size || 0); }, 0);
+    // 실수로 두 번 누른 경우를 거른다. 짧게 답하는 학생도 있으므로 시간보다 크기를 본다.
+    if (!크기 || 잰시간 < 0.4){
+      $("ivStatus").className = "status error";
+      $("ivStatus").textContent = "녹음된 소리가 없습니다. 다시 눌러 보세요.";
+      조각들 = [];
+      return;
+    }
+    var blob = new Blob(조각들, { type: (녹음기 && 녹음기.mimeType) || "audio/webm" });
+    조각들 = [];
+    받아쓰기(blob, 초);
+  }
+
+  function 받아쓰기(blob, 초){
+    받아쓰는중 = true;
+    마이크버튼(false);
+    $("ivStatus").className = "status";
+    $("ivStatus").textContent = "녹음을 글로 옮기는 중입니다. " + 초 + "초 분량이라 잠시 걸립니다.";
+
+    var 형식 = String((녹음기 && 녹음기.mimeType) || "audio/webm").split(";")[0];
+    var 질문 = (면접 && 면접.대화.length) ? 면접.대화[면접.대화.length - 1].말 : $("qText").textContent;
+    var prompt = window.PROMPTS.받아쓰기프롬프트(질문, 들릴만한말());
+
+    blob을base64로(blob).then(function(자료){
+      // 중계 서버가 받아 줄 수 있는 크기인지 먼저 본다 (Vercel 한도 4.5MB)
+      if (자료.length > 3.5 * 1024 * 1024){
+        throw new Error("녹음이 너무 깁니다. 조금 짧게 나눠 답해 보세요.");
+      }
+      return callGemini(prompt, $("keyIn").value.trim(), 모델읽기("modelSel", "modelIn"),
+        function(시도, 초2, status, raw, 한도){
+          $("ivStatus").textContent = "잠시 기다려 주세요. " + 초2 + "초 뒤 다시 시도합니다. (" + (시도+1) + "/" + 한도 + ")";
+        },
+        받아쓰기스키마,
+        { parts: [{ inline_data: { mime_type: 형식, data: 자료 } }], temperature: 0.1 }
+      );
+    }).then(function(text){
+      var r = parseJson(text);
+      var 글 = String(r.받아쓴글 || "").trim();
+      if (!글){
+        $("ivStatus").className = "status error";
+        $("ivStatus").textContent = "말소리를 찾지 못했습니다. 다시 녹음하거나 직접 입력해 주세요.";
+        return;
+      }
+      var 앞 = $("ansIn").value.trim();
+      $("ansIn").value = (앞 ? 앞 + " " : "") + 글;
+      if (r.말하기) 이번말하기 = r.말하기;
+      $("ivStatus").className = "status";
+      $("ivStatus").textContent = "";
+      $("ansTip").textContent = "잘못 받아쓴 곳이 있으면 고친 뒤 보내세요";
+      $("ansIn").focus();
+    }).catch(function(e){
+      var m = String((e && e.message) || e);
+      $("ivStatus").className = "status error";
+      $("ivStatus").textContent = /JSON/i.test(m)
+        ? "받아쓴 내용을 읽지 못했습니다. 다시 녹음하거나 직접 입력해 주세요."
+        : "받아쓰지 못했습니다. " + m;
+    }).then(function(){
+      받아쓰는중 = false;
+      마이크버튼(false);
+    });
+  }
+
+  /* ---------- 공통 ---------- */
+  var 이번말하기 = null;   // 이번 답변의 말하기 관찰. 답변을 보낼 때 기록에 담긴다
+
+  function 마이크버튼(켜짐){
+    var b = $("micBtn");
+    b.classList.toggle("rec", !!켜짐);
+    b.disabled = 받아쓰는중;
+    b.textContent = 받아쓰는중 ? "옮기는 중…"
+      : (입력방법 === "rec" ? (켜짐 ? "녹음 끝" : "녹음해서 답하기")
+                            : (켜짐 ? "그만 말하기" : "말하기"));
+  }
+
+  function 입력방법적용(){
+    var sel = $("inputMode");
+    입력방법 = sel ? sel.value : "rec";
+    if (듣는중) 듣기멈춤();
+    if (녹음중) 녹음끝();
+    $("micBtn").style.display = (입력방법 === "type") ? "none" : "";
+    마이크버튼(false);
+    $("ansIn").placeholder = (입력방법 === "rec")
+      ? "녹음해서 답하기를 누르고 말하거나, 여기에 직접 입력하세요."
+      : "답변을 입력하세요. 실제 면접처럼 소리 내어 말해보고 그대로 적으면 연습이 됩니다.";
+
+    if (입력방법 === "rec" && !안내했음){
+      안내했음 = true;
+      $("ivStatus").className = "status";
+      $("ivStatus").textContent = "녹음한 답변은 글로 옮기기 위해 전송됩니다. 실시간 받아쓰기는 전송 없이 브라우저 안에서 처리됩니다.";
+    }
+  }
+  var 안내했음 = false;
+
+  function 입력준비(){
+    마이크준비();
+    var sel = $("inputMode");
+    if (!sel) return;
+    // 쓸 수 없는 방법은 목록에서 뺀다
+    if (!녹음됨) sel.querySelector('option[value="rec"]').remove();
+    if (!SR)     sel.querySelector('option[value="live"]').remove();
+    sel.value = 녹음됨 ? "rec" : (SR ? "live" : "type");
+    sel.addEventListener("change", 입력방법적용);
+    입력방법적용();
+  }
+
+  function 마이크멈춤(){
+    if (듣는중) 듣기멈춤();
+    if (녹음중) 녹음끝();
+  }
+
+  입력준비();
+  $("micBtn").addEventListener("click", function(){
+    if (받아쓰는중) return;
+    if (입력방법 === "rec") { 녹음중 ? 녹음끝() : 녹음시작(); }
+    else { 듣는중 ? 듣기멈춤() : 듣기시작(); }
+  });
 
   /* ================= 3단계 · 면접 진행 ================= */
   var 면접 = null;
@@ -1533,7 +1793,8 @@
     $("ivLogBody").innerHTML = "";
     $("ansIn").value = "";
     읽기멈춤();
-    if (듣는중) 듣기멈춤();
+    마이크멈춤();
+    이번말하기 = null; 말하기기록 = [];
     $("qText").textContent = "면접을 준비하고 있습니다…";
     $("qTag").textContent = "";
     $("replayBtn").style.display = "none";
@@ -1629,8 +1890,9 @@
     if (!면접 || 면접.끝남) return;
     var v = (말 || $("ansIn").value).trim();
     if (!v) return;
-    if (듣는중) 듣기멈춤();
-    면접.대화.push({ 역할: "학생", 말: v });
+    마이크멈춤();
+    면접.대화.push({ 역할: "학생", 말: v, 말하기: 이번말하기 || null });
+    if (이번말하기){ 말하기기록.push(이번말하기); 이번말하기 = null; }
     $("ansIn").value = "";
     로그그리기();
     다음턴();
@@ -1640,7 +1902,7 @@
     면접.끝남 = true;
     if (시계) clearInterval(시계);
     if (맺음말) 면접.대화.push({ 역할: "면접관", 말: 맺음말 });
-    if (듣는중) 듣기멈춤();
+    마이크멈춤();
     $("qText").textContent = 맺음말 || "면접을 마치겠습니다.";
     $("qTag").textContent = "";
     $("replayBtn").style.display = "none";
@@ -1668,7 +1930,7 @@
 
     var key = $("keyIn").value.trim();
     var model = 모델읽기("fbModelSel2", "fbModelIn2");
-    var prompt = window.PROMPTS.평가프롬프트(면접.카드, 면접.대화, 난이도, 면접.대학, 면접.학과);
+    var prompt = window.PROMPTS.평가프롬프트(면접.카드, 면접.대화, 난이도, 면접.대학, 면접.학과, 말하기기록);
 
     callGemini(prompt, key, model, function(시도, 초, status, raw, 한도){
       $("fbStatus").textContent = "잠시 기다려 주세요. " + 초 + "초 뒤 다시 시도합니다. (" + (시도+1) + "/" + 한도 + ")";
@@ -1730,6 +1992,10 @@
                    : "<p>—</p>");
     $("fbNext").innerHTML = "<h4>다음 연습에서</h4><p>" + escHtml(피드백.다음연습 || "—") + "</p>";
 
+    var 전달 = String(피드백.전달 || "").trim();
+    $("fbTell").style.display = 전달 ? "" : "none";
+    $("fbTell").innerHTML = 전달 ? "<h4>말하기</h4><p>" + escHtml(전달) + "</p>" : "";
+
     $("fb").style.display = "";
     단계표시(4);
     $("fbBtn").textContent = "피드백 다시 받기";
@@ -1756,6 +2022,7 @@
     });
     L.push("── 잘한 점 ──", "");
     (피드백.잘한점 || []).forEach(function(t){ L.push("· " + t); });
+    if (String(피드백.전달 || "").trim()) L.push("", "── 말하기 ──", "", 피드백.전달);
     L.push("", "── 다음 연습에서 ──", "", 피드백.다음연습 || "");
     L.push("", "", "── 면접 기록 ──", "");
     면접.대화.forEach(function(t){
@@ -1780,7 +2047,10 @@
 
   $("startIvBtn").addEventListener("click", 면접시작);
   $("ansBtn").addEventListener("click", function(){ 답변보내기(); });
-  $("dunnoBtn").addEventListener("click", function(){ 답변보내기("잘 모르겠습니다."); });
+  $("dunnoBtn").addEventListener("click", function(){
+    이번말하기 = null;             // 녹음해 둔 관찰은 이 답변과 상관없다
+    답변보내기("잘 모르겠습니다.");
+  });
   $("ansIn").addEventListener("keydown", function(e){
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter"){ e.preventDefault(); 답변보내기(); }
   });
@@ -1801,7 +2071,10 @@
       "걸린 시간: " + Math.floor(경과초()/60) + "분 " + (경과초()%60) + "초",
       "", "─────────────", ""
     ].concat(면접.대화.map(function(t){
-      return (t.역할 === "면접관" ? "면접관  " : "나      ") + t.말;
+      var 줄 = (t.역할 === "면접관" ? "면접관  " : "나      ") + t.말;
+      if (t.말하기) 줄 += "\n        (말하기 · 속도 " + t.말하기.속도 + " · 머뭇거림 " + t.말하기.머뭇거림 +
+                         " · 또렷함 " + t.말하기.또렷함 + ")";
+      return 줄;
     })).join("\n");
     파일받기("모의면접_기록.txt", txt);
   });
