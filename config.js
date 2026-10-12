@@ -14,6 +14,6 @@ window.면접설정 = {
        예) "https://interview-proxy.아이디.workers.dev"
 
      비워 두면 학생이 각자 자기 Gemini API 키를 넣는 방식으로 동작합니다. */
-  중계서버: "https://interview-chi-seven.vercel.app/api/gemini"
+  중계서버: "interview-mocha-seven.vercel.app/api/gemini"
 
 };
