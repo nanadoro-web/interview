@@ -151,6 +151,9 @@
   .setup2.on{display:block}
   .formcard{background:var(--paper);border:1px solid var(--rule);border-radius:3px;box-shadow:var(--shadow);padding:26px 28px}
   .formcard h3{margin:0 0 4px;font-size:15px;font-weight:600}
+  .mode{margin:0 0 20px;padding:9px 13px;border-radius:2px;font-size:12.5px;line-height:1.6}
+  .mode.on{background:var(--accent-weak);color:var(--accent)}
+  .mode.off{background:var(--flag-weak);color:var(--flag)}
   .formcard > p.sub{margin:0 0 22px;font-size:13px;color:var(--ink-soft)}
   .levels{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
   @media (max-width:640px){ .levels{grid-template-columns:1fr} }
@@ -367,6 +370,7 @@
     </div>
 
     <div class="formcard">
+      <p class="mode" id="모드"></p>
       <div class="fields" style="margin-top:0">
         <div class="field">
           <label for="univIn">지원 대학</label>
@@ -563,19 +567,17 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="config.js"></script>
 <script src="prompts.js"></script>
 <script>
 (function(){
   "use strict";
 
   /* =====================================================================
-     여기만 고치면 배포 방식이 바뀝니다.
-
-     중계 서버를 만드셨다면 주소를 넣으세요. 학생은 접속 코드만 넣으면 됩니다.
-       예) var 중계서버 = "https://interview-proxy.아이디.workers.dev";
-     비워 두면 학생이 각자 자기 API 키를 넣는 방식으로 동작합니다.
+     중계 서버 주소는 config.js 에 적습니다. 이 파일은 고치지 않아도 됩니다.
+     config.js 가 없거나 비어 있으면 학생이 각자 키를 넣는 방식으로 동작합니다.
      ===================================================================== */
-  var 중계서버 = "";
+  var 중계서버 = (window.면접설정 && window.면접설정.중계서버 || "").trim().replace(/\/+$/, "");
 
   /* 상태 — 메모리에만. localStorage 등 저장소를 쓰지 않습니다. */
   var rawText = "", cleanText = "", extraWords = [], editing = false;
@@ -701,13 +703,20 @@
     return v;
   }
 
-  /* 중계 서버를 쓰면 학생은 키 대신 접속 코드를 넣는다 */
+  /* 중계 서버를 쓰면 학생은 키 대신 접속 코드를 넣는다.
+     어느 방식으로 돌고 있는지 화면에 드러내 둔다.
+     config.js 를 깜빡하면 학생에게 API 키를 묻게 되므로 눈에 보여야 한다. */
   if (중계서버){
     $("keyLabel").textContent = "접속 코드";
     $("keyIn").placeholder = "선생님께 받은 코드";
     $("keyHint").textContent = "저장하지 않습니다. 창을 닫으면 사라집니다.";
     var 어디로 = $("어디로");
     if (어디로) 어디로.textContent = "학교 중계 서버를 거쳐 Gemini";
+    $("모드").className = "mode on";
+    $("모드").textContent = "중계 서버로 연결됩니다 · 학생은 접속 코드만 넣습니다";
+  } else {
+    $("모드").className = "mode off";
+    $("모드").textContent = "중계 서버가 설정되지 않아 학생이 각자 API 키를 넣어야 합니다. config.js 의 중계서버 칸을 채우세요.";
   }
 
   모델칸만들기("modelSel", "modelIn", "gemini-3.5-flash-lite");
