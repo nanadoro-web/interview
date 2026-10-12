@@ -12,6 +12,13 @@
                       예) https://nanadoro-web.github.io
    ===================================================================== */
 
+/* 녹음한 답변이 base64 로 실려 오므로 본문이 커집니다.
+   Vercel 함수의 본문 한도는 플랫폼 차원에서 4.5MB 이고 그 위로는 올릴 수 없습니다.
+   다만 24kbps 로 녹음하므로 3분이 700KB 안팎이라 넉넉합니다.
+   아래 설정은 이 파일이 Next.js 프로젝트 안에 들어갔을 때
+   기본값 1MB 에 걸리지 않게 하려는 것입니다. 그 밖에서는 무시됩니다. */
+export const config = { api: { bodyParser: { sizeLimit: "4mb" } } };
+
 const 허용모델 = [
   "gemini-3.5-flash-lite",
   "gemini-3.6-flash",
