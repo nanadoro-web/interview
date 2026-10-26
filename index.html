@@ -90,6 +90,14 @@
   .field .hint{font-size:12px;color:var(--ink-soft);margin-top:5px}
 
   .altrow{margin-top:22px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  .typebox{display:none;margin-top:14px;background:var(--paper);border:1px solid var(--rule);border-radius:3px;box-shadow:var(--shadow);padding:18px 20px}
+  .typebox.on{display:block}
+  .typebox > label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:6px}
+  .typebox textarea{width:100%;min-height:210px;font:inherit;font-size:14px;line-height:1.8;padding:13px 15px;resize:vertical;
+                    background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:2px}
+  .typebox textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  .typerow{margin-top:11px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .typerow .tip{margin-left:auto;font-size:12px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
   .linkbtn{background:none;border:none;font:inherit;font-size:13px;color:var(--accent);cursor:pointer;padding:0;border-bottom:1px solid currentColor}
   .linkbtn:hover{opacity:.75}
 
@@ -248,6 +256,27 @@
   .grade.g하 .gv{color:var(--flag)}
   .grade.gna .gv{font-size:13px;color:var(--ink-soft)}
   .grade p{margin:0;font-size:12.5px;line-height:1.6;color:var(--ink-soft)}
+  .fb-sub{margin:-8px 0 14px;font-size:12.5px;color:var(--ink-soft);line-height:1.6}
+  .pq{display:grid;grid-template-columns:auto auto 1fr;gap:10px 14px;align-items:baseline;
+      background:var(--paper);border:1px solid var(--rule);border-radius:3px;box-shadow:var(--shadow);
+      padding:12px 16px;margin-bottom:8px}
+  @media (max-width:640px){ .pq{grid-template-columns:1fr;gap:4px} }
+  .pq .q{grid-column:1/-1;font-size:13.5px;font-weight:600;line-height:1.5}
+  .pq .tag{font-size:11.5px;padding:2px 8px;border-radius:2px;white-space:nowrap}
+  .pq .tag.hit{background:var(--ok-weak);color:var(--ok)}
+  .pq .tag.near{background:var(--flag-weak);color:var(--flag)}
+  .pq .tag.miss{background:var(--flag);color:#fff}
+  .pq .tag.s{background:var(--accent-weak);color:var(--accent)}
+  .pq .tag.s.mid{background:var(--rule-soft);color:var(--ink-soft)}
+  .pq .tag.s.low{background:var(--flag-weak);color:var(--flag)}
+  .pq .why{font-size:13px;line-height:1.65;color:var(--ink-soft)}
+  .memo-card{background:var(--paper);border:1px solid var(--rule);border-left:3px solid var(--rule);
+             border-radius:3px;box-shadow:var(--shadow);padding:14px 18px;margin-bottom:10px}
+  .memo-card .where{font-size:11.5px;color:var(--ink-soft);margin:0 0 5px}
+  .memo-card .pity{margin:0 0 8px;font-size:14px;line-height:1.7}
+  .memo-card .truth{margin:0;padding:9px 12px;background:var(--desk);border-radius:2px;font-size:13.5px;line-height:1.7}
+  .memo-card .truth b{display:block;font-size:11px;color:var(--ink-soft);font-weight:500;margin-bottom:2px}
+  @media print{ .pq,.memo-card{break-inside:avoid;box-shadow:none} }
   .pt{background:var(--paper);border:1px solid var(--rule);border-radius:3px;box-shadow:var(--shadow);padding:18px 20px;margin-bottom:12px}
   .pt .qq{font-size:12px;color:var(--ink-soft);margin:0 0 9px}
   .pt .said{font-family:"Noto Serif KR",serif;font-size:14px;line-height:1.7;margin:0 0 10px;padding-left:11px;border-left:2px solid var(--rule)}
@@ -294,11 +323,26 @@
       <p>파일은 이 컴퓨터를 벗어나지 않습니다. 브라우저 안에서 읽고, 가리고, 화면에 보여줄 뿐입니다. 저장하지도 않아서 창을 닫으면 사라집니다.</p>
     </div>
 
-    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="생기부 PDF 파일 선택">
+    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="생기부 PDF 또는 txt 파일 선택">
       <p class="demo-line"><span class="label">성명</span><span class="demo-name">홍길동<span class="cover"></span></span></p>
       <p class="drop-main">생기부 PDF를 여기에 놓으세요</p>
-      <p class="drop-sub">누르면 파일을 고를 수도 있습니다</p>
-      <input type="file" id="fileInput" accept="application/pdf,.pdf" class="visually-hidden">
+      <p class="drop-sub">txt 파일도 됩니다. 누르면 파일을 고를 수도 있습니다</p>
+      <input type="file" id="fileInput" accept="application/pdf,.pdf,text/plain,.txt" class="visually-hidden">
+    </div>
+
+    <div class="altrow">
+      <button class="linkbtn" id="typeToggle" type="button">파일 대신 내용을 직접 붙여넣기</button>
+    </div>
+
+    <div class="typebox" id="typebox">
+      <label for="typeIn">생기부 내용</label>
+      <textarea id="typeIn" spellcheck="false" placeholder="생기부에서 면접에 쓸 부분을 붙여넣거나 직접 적으세요.&#10;&#10;이런 모양으로 적으면 됩니다&#10;&#10;3학년 (영역 또는 과목명)&#10;(활동 이름) — 무엇을 했고 무엇을 알게 되었는지 두세 문장&#10;&#10;2학년 (영역 또는 과목명)&#10;(탐구 주제) — 어떤 자료를 썼고 어떻게 결론을 냈는지&#10;&#10;학년과 과목을 앞에 적어 두면 면접관이 그 활동을 짚어 묻기 좋습니다."></textarea>
+      <div class="typerow">
+        <button class="btn small" id="typeGoBtn" type="button">이 내용으로 시작</button>
+        <button class="btn ghost small" id="typeClearBtn" type="button">지우기</button>
+        <span class="tip" id="typeCount">0자</span>
+      </div>
+      <p class="hint" style="margin-top:9px">여기 적은 내용도 아래 이름·학교 칸을 거쳐 똑같이 가려집니다. 적을수록 질문거리가 적어지니, 면접에서 다루고 싶은 활동을 넉넉히 넣으세요.</p>
     </div>
 
     <div class="fields">
@@ -548,8 +592,18 @@
       <h3 class="fb-h">영역별 평가</h3>
       <div class="grades" id="fbGrades"></div>
 
+      <h3 class="fb-h">문항별 짚기</h3>
+      <p class="fb-sub">묻는 말에 답했는지, 듣기에 깔끔했는지를 문항마다 봅니다.</p>
+      <div id="fbPerQ"></div>
+
       <h3 class="fb-h">고칠 곳</h3>
       <div id="fbPoints"></div>
+
+      <div id="fbContentWrap" style="display:none">
+        <h3 class="fb-h">내용에서 아쉬운 곳</h3>
+        <p class="fb-sub">생기부에 이미 적힌 것은 고칠 수 없습니다. 다만 실제 면접에서 같은 말을 하면 짚일 수 있어 적어 둡니다.</p>
+        <div id="fbContent"></div>
+      </div>
 
       <div class="card" id="fbTell" style="display:none;margin-top:26px"></div>
 
@@ -664,12 +718,28 @@
           required: ["영역","등급","이유"]
         }
       },
+      "문항별": {
+        type: "ARRAY",
+        items: {
+          type: "OBJECT",
+          properties: { "질문": 글, "답했나": 글, "짜임": 글, "한줄": 글 },
+          required: ["질문","답했나","짜임","한줄"]
+        }
+      },
       "지적사항": {
         type: "ARRAY",
         items: {
           type: "OBJECT",
           properties: { "문항": 글, "문제된답": 글, "왜": 글, "이렇게": 글 },
           required: ["문항","왜","이렇게"]
+        }
+      },
+      "내용메모": {
+        type: "ARRAY",
+        items: {
+          type: "OBJECT",
+          properties: { "어디": 글, "아쉬운점": 글, "실은": 글 },
+          required: ["어디","아쉬운점","실은"]
         }
       },
       "잘한점": { type: "ARRAY", items: 글 },
@@ -942,6 +1012,45 @@
       });
     };
     reader.readAsArrayBuffer(file);
+  }
+
+  /* txt 파일은 그대로 읽는다. 한글 문서를 메모장으로 저장하면 보통 UTF-8 이지만
+     예전 윈도우에서는 CP949 로 저장되기도 해서, 깨진 글자가 많으면 다시 읽는다. */
+  function readTxt(file){
+    setStatus("읽는 중…");
+    읽어보기(file, "utf-8", function(text){
+      var 깨짐 = (text.match(/\uFFFD/g) || []).length;
+      if (깨짐 > 3){
+        읽어보기(file, "euc-kr", function(다시){ 글로받기(다시); },
+                 function(){ 글로받기(text); });
+      } else 글로받기(text);
+    }, function(){ setStatus("파일을 열지 못했습니다.", true); });
+  }
+
+  function 읽어보기(file, 인코딩, 됐을때, 안됐을때){
+    var reader = new FileReader();
+    reader.onerror = function(){ if (안됐을때) 안됐을때(); };
+    reader.onload = function(){ 됐을때(String(reader.result || "")); };
+    try { reader.readAsText(file, 인코딩); }
+    catch (e){ if (안됐을때) 안됐을때(); }
+  }
+
+  /* PDF 든 txt 든 붙여넣기든, 글이 들어오는 입구는 여기 하나다. */
+  function 글로받기(text){
+    var 정리 = String(text || "").replace(/\r\n?/g, "\n")
+                 .replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+    if (정리.length < 50){
+      setStatus("내용이 너무 짧습니다. 면접에서 다룰 활동을 좀 더 넣어 주세요.", true); return;
+    }
+    rawText = 정리; extraWords = []; setStatus(""); rebuild();
+  }
+
+  /* 고른 파일이 PDF 인지 txt 인지 보고 알맞은 쪽으로 보낸다. */
+  function 파일읽기(file){
+    if (!file) return;
+    if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) return readPdf(file);
+    if (/^text\//.test(file.type) || /\.(txt|md|text)$/i.test(file.name)) return readTxt(file);
+    setStatus("PDF 나 txt 파일만 읽을 수 있습니다.", true);
   }
 
   var SAMPLE = [
@@ -1288,15 +1397,43 @@
   var dz = $("dropzone"), fi = $("fileInput");
   dz.addEventListener("click", function(){ fi.click(); });
   dz.addEventListener("keydown", function(e){ if (e.key === "Enter" || e.key === " "){ e.preventDefault(); fi.click(); } });
-  fi.addEventListener("change", function(){ if (fi.files && fi.files[0]) readPdf(fi.files[0]); });
+  fi.addEventListener("change", function(){ if (fi.files && fi.files[0]) 파일읽기(fi.files[0]); });
   ["dragenter","dragover"].forEach(function(ev){ dz.addEventListener(ev, function(e){ e.preventDefault(); dz.classList.add("over"); }); });
   ["dragleave","drop"].forEach(function(ev){ dz.addEventListener(ev, function(e){ e.preventDefault(); dz.classList.remove("over"); }); });
   dz.addEventListener("drop", function(e){
     var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
     if (!f) return;
-    if (f.type !== "application/pdf" && !/\.pdf$/i.test(f.name)){ setStatus("PDF 파일만 읽을 수 있습니다.", true); return; }
-    readPdf(f);
+    파일읽기(f);
   });
+
+  /* ---------------- 직접 붙여넣기 ---------------- */
+  (function(){
+    var 상자 = $("typebox"), 칸 = $("typeIn"), 토글 = $("typeToggle");
+
+    function 세기(){
+      var 수 = 칸.value.replace(/\s/g, "").length;
+      $("typeCount").textContent = 수.toLocaleString() + "자";
+    }
+
+    토글.addEventListener("click", function(){
+      var 열린다 = !상자.classList.contains("on");
+      상자.classList.toggle("on", 열린다);
+      토글.textContent = 열린다 ? "붙여넣기 칸 접기" : "파일 대신 내용을 직접 붙여넣기";
+      if (열린다){ 칸.focus(); 세기(); }
+    });
+
+    칸.addEventListener("input", 세기);
+
+    $("typeGoBtn").addEventListener("click", function(){
+      var 글 = 칸.value.trim();
+      if (!글){ setStatus("붙여넣은 내용이 없습니다.", true); 칸.focus(); return; }
+      글로받기(글);
+    });
+
+    $("typeClearBtn").addEventListener("click", function(){
+      칸.value = ""; 세기(); 칸.focus();
+    });
+  })();
 
   /* ---------------- 저장해 둔 카드 불러오기 ---------------- */
   function setLoadStatus(msg, isError){
@@ -1358,10 +1495,9 @@
   });
 
   $("sampleBtn").addEventListener("click", function(){
-    rawText = SAMPLE; extraWords = [];
     if (!$("nameIn").value) $("nameIn").value = "홍길동";
     if (!$("schoolIn").value) $("schoolIn").value = "○○고등학교";
-    setStatus(""); rebuild();
+    글로받기(SAMPLE);
   });
 
   $("addBtn").addEventListener("click", function(){
@@ -1391,7 +1527,14 @@
     if ($("cvLoaded")) $("cvLoaded").style.display = "none";
     $("docEdit").style.display = "none"; $("docText").style.display = "block";
     $("editBtn").textContent = "본문 직접 고치기";
-    fi.value = ""; setStatus(""); show("setup"); 단계표시(1);
+    fi.value = "";
+    if ($("typeIn")){
+      $("typeIn").value = "";
+      $("typeCount").textContent = "0자";
+      $("typebox").classList.remove("on");
+      $("typeToggle").textContent = "파일 대신 내용을 직접 붙여넣기";
+    }
+    setStatus(""); show("setup"); 단계표시(1);
   });
 
   $("toStep2Btn").addEventListener("click", function(){
@@ -1593,7 +1736,8 @@
   }
 
   /* 생기부에서 나온 말들을 받아쓰기 힌트로 넘긴다.
-     CBAM 같은 말은 미리 알려 주지 않으면 어떤 받아쓰기도 못 알아듣는다. */
+     생기부에만 나오는 전문 용어나 줄임말은 미리 알려 주지 않으면
+     어떤 받아쓰기도 못 알아듣는다. */
   function 들릴만한말(){
     if (!면접 || !면접.카드) return [];
     var 모음 = {}, 담기 = function(w){
@@ -2032,6 +2176,37 @@
       g.appendChild(d);
     });
 
+    var qbox = $("fbPerQ"); qbox.innerHTML = "";
+    var 문항들 = 피드백.문항별 || [];
+    if (!문항들.length) qbox.innerHTML = '<div class="pq"><span class="why">문항별 기록이 없습니다.</span></div>';
+    문항들.forEach(function(x, i){
+      var 답 = x.답했나 || "";
+      var 답cls = /많이/.test(답) ? "miss" : (/빗나/.test(답) ? "near" : "hit");
+      var 짜 = x.짜임 || "";
+      var 짜cls = /흐림/.test(짜) ? "s low" : (/보통/.test(짜) ? "s mid" : "s");
+      var d = document.createElement("div");
+      d.className = "pq";
+      d.innerHTML =
+        '<span class="q">' + (i+1) + '. ' + escHtml(x.질문 || "") + '</span>' +
+        '<span class="tag ' + 답cls + '">' + escHtml(답 || "-") + '</span>' +
+        '<span class="tag ' + 짜cls + '">짜임 ' + escHtml(짜 || "-") + '</span>' +
+        '<span class="why">' + escHtml(x.한줄 || "") + '</span>';
+      qbox.appendChild(d);
+    });
+
+    var mbox = $("fbContent"); mbox.innerHTML = "";
+    var 메모들 = 피드백.내용메모 || [];
+    $("fbContentWrap").style.display = 메모들.length ? "" : "none";
+    메모들.forEach(function(x){
+      var d = document.createElement("div");
+      d.className = "memo-card";
+      d.innerHTML =
+        (x.어디 ? '<p class="where">' + escHtml(x.어디) + '</p>' : '') +
+        (x.아쉬운점 ? '<p class="pity">' + escHtml(x.아쉬운점) + '</p>' : '') +
+        (x.실은 ? '<p class="truth"><b>실은</b>' + escHtml(x.실은) + '</p>' : '');
+      mbox.appendChild(d);
+    });
+
     var pbox = $("fbPoints"); pbox.innerHTML = "";
     var pts = 피드백.지적사항 || [];
     if (!pts.length){
@@ -2074,7 +2249,14 @@
       L.push("[" + (x.등급 || "확인 안 됨") + "] " + x.영역);
       L.push("    " + (x.이유 || ""));
     });
-    L.push("", "── 고칠 곳 ──", "");
+    L.push("", "── 문항별 짚기 ──", "");
+    (피드백.문항별 || []).forEach(function(x, i){
+      L.push((i+1) + ". " + (x.질문 || ""));
+      L.push("   답했나: " + (x.답했나 || "-") + " · 짜임: " + (x.짜임 || "-"));
+      if (x.한줄) L.push("   " + x.한줄);
+      L.push("");
+    });
+    L.push("── 고칠 곳 ──", "");
     (피드백.지적사항 || []).forEach(function(x, i){
       L.push((i+1) + ". " + (x.문항 || ""));
       if (x.문제된답) L.push("   내 답: " + x.문제된답);
@@ -2082,6 +2264,15 @@
       if (x.이렇게)  L.push("   이렇게: " + x.이렇게);
       L.push("");
     });
+    if ((피드백.내용메모 || []).length){
+      L.push("── 내용에서 아쉬운 곳 ──", "");
+      피드백.내용메모.forEach(function(x){
+        L.push("· " + (x.어디 || ""));
+        if (x.아쉬운점) L.push("  " + x.아쉬운점);
+        if (x.실은)     L.push("  실은: " + x.실은);
+        L.push("");
+      });
+    }
     L.push("── 잘한 점 ──", "");
     (피드백.잘한점 || []).forEach(function(t){ L.push("· " + t); });
     if (String(피드백.전달 || "").trim()) L.push("", "── 말하기 ──", "", 피드백.전달);
