@@ -90,6 +90,11 @@
   .field .hint{font-size:12px;color:var(--ink-soft);margin-top:5px}
 
   .altrow{margin-top:22px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  /* 화면들은 기본이 '안 보임' 이다. show() 가 켜 주는 것만 보인다.
+     켜는 줄을 빠뜨리면 아무것도 안 보여 바로 눈에 띈다.
+     기본을 '보임' 으로 두면 여러 화면이 겹쳐 쌓여 알아채기 어렵다. */
+  #home, #setup, #pair{display:none}
+
   /* 첫 갈림길 */
   .homewrap{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:26px}
   @media (max-width:760px){ .homewrap{grid-template-columns:1fr} }
@@ -1038,6 +1043,8 @@
     if (p띠){ p띠.className = 띠.className; p띠.textContent = 띠.textContent; }
   })();
 
+  show("home");           // 처음 열면 갈림길부터 보인다
+
   모델칸만들기("modelSel", "modelIn", "gemini-3.5-flash-lite");
   모델칸만들기("fbModelSel", "fbModelIn", "gemini-3.5-flash-lite");
   모델칸만들기("fbModelSel2", "fbModelIn2", "gemini-3.5-flash-lite");
@@ -1182,12 +1189,12 @@
     ["setup","review","setup2","cardview","iv"].forEach(function(id){
       var el = $(id);
       if (id === "review") el.classList.toggle("on", which === id);
-      else if (id === "setup") el.style.display = (which === id) ? "" : "none";
+      else if (id === "setup") el.style.display = (which === id) ? "block" : "none";
       else el.classList.toggle("on", which === id);
     });
     ["home","pair"].forEach(function(id){
       var el = $(id);
-      if (el) el.style.display = (which === id) ? "" : "none";
+      if (el) el.style.display = (which === id) ? "block" : "none";
     });
     /* 1·2·3·4 단계 띠는 혼자 연습하기의 차례다.
        갈림길과 녹음 화면에는 해당하지 않으니 감춘다. */
