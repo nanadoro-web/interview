@@ -614,13 +614,6 @@
         </div>
       </div>
 
-      <div class="altrow">
-        <button class="linkbtn" id="pCardBtn" type="button">면접 카드 불러오기 (선택)</button>
-        <span class="tip" id="pCardState">불러오지 않음</span>
-        <input type="file" id="pCardFile" accept="application/json,.json" class="visually-hidden">
-      </div>
-      <p class="hint" style="margin-top:7px">카드를 불러오면 생기부에 적힌 전문 용어를 제대로 받아씁니다. 없어도 됩니다.</p>
-
       <div class="card" style="margin-top:26px">
         <h3 style="margin:0 0 8px;font-size:15px">녹음하기 전에 자리를 잡으세요</h3>
         <p class="hint" style="margin:0 0 4px">휴대폰이나 노트북을 <b>두 사람 사이</b>에 두고 화면이 위로 오게 놓으세요. 각자에게서 1m쯤이면 넉넉합니다. 교실마다 울림이 달라서 한 번 재보시는 편이 확실합니다.</p>
@@ -696,6 +689,13 @@
       <div class="turns" id="pTurns" style="display:none"></div>
 
       <textarea id="pScript" spellcheck="false" style="width:100%;min-height:380px;font:inherit;font-size:14px;line-height:1.9;padding:15px 17px;resize:vertical;background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:2px"></textarea>
+      <div class="row" id="pRedoRow" style="display:none;margin-top:12px;align-items:center;padding:11px 13px;background:var(--accent-weak);border-radius:2px">
+        <label for="pRedoSel" style="font-size:12.5px;color:var(--ink-soft)">다시 옮기기</label>
+        <select id="pRedoSel" style="font:inherit;font-size:12.5px;padding:4px 9px;background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:2px"></select>
+        <button class="btn ghost small" id="pRedoBtn" type="button">다시 옮기기</button>
+        <span class="tip" id="pRedoTip" style="margin-left:auto"></span>
+      </div>
+
       <div class="row" style="margin-top:12px;align-items:center">
         <button class="btn small" id="pToFbBtn" type="button">이 내용으로 피드백 받기</button>
         <button class="btn ghost small" id="pScriptSaveBtn" type="button">받아쓴 글 저장</button>
@@ -772,6 +772,8 @@
         <button class="btn ghost small" id="doneSaveBtn" type="button">기록 저장</button>
         <button class="btn ghost small" id="doneAgainBtn" type="button">다시 면접 보기</button>
         <button class="btn ghost small" id="doneCardBtn" type="button">카드로 돌아가기</button>
+        <button class="btn ghost small" id="doneBackPairBtn" type="button" style="display:none">받아쓴 글로 돌아가기</button>
+        <button class="btn ghost small" id="doneHomeBtn" type="button" style="display:none">처음 화면으로</button>
       </div>
       <div class="loading" id="fbLoading" style="display:none;justify-content:center"><span class="spin"></span><span>면접을 되짚어 보고 있습니다.</span></div>
       <p class="status" id="fbStatus"></p>
@@ -810,6 +812,8 @@
         <button class="btn small" id="fbSaveBtn" type="button">피드백 저장</button>
         <button class="btn ghost small" id="fbAgainBtn" type="button">다시 면접 보기</button>
         <button class="btn ghost small" id="fbCardBtn" type="button">카드로 돌아가기</button>
+        <button class="btn ghost small" id="fbBackPairBtn" type="button" style="display:none">받아쓴 글로 돌아가기</button>
+        <button class="btn ghost small" id="fbHomeBtn" type="button" style="display:none">처음 화면으로</button>
       </div>
     </div>
   </section>
@@ -849,6 +853,15 @@
     var 기본 = !중계서버 ? 15 : 앱스크립트 ? 12 : 3.5;
     var MB = 적어둔것 > 0 ? Math.min(적어둔것, 15) : 기본;
     return MB * 1024 * 1024;
+  })();
+
+  /* 한 번에 보낼 소리의 길이(초).
+     모델은 긴 소리를 통째로 받아쓰라고 하면 중간을 버리거나 같은 말을 되풀이한다.
+     10분을 한 번에 보내면 말 하나가 도중에 끊기고 다음 사람으로 건너뛴다.
+     그래서 짧게 토막내어 따로 보내고, 받은 결과를 시각을 밀어 이어 붙인다. */
+  var 토막길이 = (function(){
+    var 적어둔것 = Number(window.면접설정 && window.면접설정.토막길이_초) || 0;
+    return Math.min(Math.max(적어둔것 || 180, 60), 480);
   })();
 
   /* 이 한도 안에 몇 분이 들어가는지. base64 로 4/3 배 불어나는 것을 되돌려 센다. */
@@ -1403,6 +1416,10 @@
         temperature: (옵션.temperature === undefined ? 0.4 : 옵션.temperature),
         responseMimeType: "application/json"
       };
+      /* 낼 수 있는 길이를 적어 두지 않으면 모델 기본값에 맡겨진다.
+         받아쓰기처럼 긴 글이 나오는 호출에서 기본값에 걸리면
+         JSON 이 한복판에서 끊긴 채로 온다. 넉넉히 적어 둔다. */
+      if (옵션.최대출력) cfg.maxOutputTokens = 옵션.최대출력;
       if (스키마쓰기) cfg.responseSchema = schema;
       var 조각 = [{ text: prompt }].concat(옵션.parts || []);
       var 몸 = {
@@ -1511,9 +1528,18 @@
     if (쌓임.length || 따옴표) {
       var v = u;
       if (따옴표) v += '"';                 // 문자열 한복판에서 끊긴 경우
+      /* 이름만 적히고 값이 오기 전에 끊긴 경우. "머뭇거림": 로 끝나 있으면
+         괄호만 닫아도 못 읽는다. 그 토막을 떼어내면 앞의 멀쩡한 부분은 살릴 수 있다. */
+      v = v.replace(/(?:,\s*)?"[^"]*"\s*:\s*$/, "");
       v = v.replace(/,\s*$/, "");
       for (var j = 쌓임.length - 1; j >= 0; j--) v += (쌓임[j] === "{" ? "}" : "]");
-      try { return JSON.parse(v); } catch (e3) {}
+      try {
+        var 되살린것 = JSON.parse(v);
+        /* 끊긴 것을 괄호만 닫아 되살린 것이다. 알맹이는 뒤가 잘려 있다.
+           그냥 돌려주면 짧아진 글을 멀쩡한 것으로 착각하게 되므로 표를 남긴다. */
+        if (되살린것 && typeof 되살린것 === "object") 되살린것.__잘림 = true;
+        return 되살린것;
+      } catch (e3) {}
     }
 
     var err = new Error("JSON 형식이 어긋났습니다.");
@@ -1735,7 +1761,8 @@
     녹음기: null, 줄기: null, 조각들: [], 시작시각: 0, 시계: null,
     시험기: null, 시험줄기: null, 시험조각: [], 시험시계: null,
     소리주소: null, 보기: "고치기",
-    카드: null, 말하기: null, 대화: []
+    토막들: [], 담긴바이트: 0, 끝낼까: false, 토막시작: 0,
+    말하기: null, 대화: []
   };
 
   function 짝보이기(어느){
@@ -1842,15 +1869,10 @@
     짝알림("pSetupStatus", "");
 
     navigator.mediaDevices.getUserMedia({ audio: 먼거리설정() }).then(function(줄기){
-      짝.줄기 = 줄기; 짝.조각들 = [];
-      짝.녹음기 = 녹음기만들기(줄기, 짝비트레이트());
-      짝.녹음기.ondataavailable = function(e){ if (e.data && e.data.size) 짝.조각들.push(e.data); };
-      짝.녹음기.onstop = function(){
-        줄기끄기(짝.줄기); 짝.줄기 = null;
-        if (짝.시계){ clearInterval(짝.시계); 짝.시계 = null; }
-      };
-      짝.녹음기.start(1000);   // 1초마다 조각을 받아 크기를 보여줄 수 있게
+      짝.줄기 = 줄기;
+      짝.토막들 = []; 짝.담긴바이트 = 0; 짝.끝낼까 = false;
       짝.시작시각 = Date.now();
+      녹음기걸기(0);
       짝보이기("pairRec");
       짝시계갱신();
       짝.시계 = setInterval(짝시계갱신, 1000);
@@ -1859,47 +1881,91 @@
     });
   }
 
+  /* 녹음기 하나가 토막 하나를 맡는다.
+     끊었다 다시 켜는 방식이라 토막마다 머리말이 온전한 소리 파일이 된다.
+     webm 을 나중에 칼로 자르면 머리말이 없어 열리지 않으므로 이렇게 한다.
+     마이크 줄기는 끊지 않고 그대로 두어 끊기는 틈을 줄인다. */
+  function 녹음기걸기(시작초){
+    var 녹 = 녹음기만들기(짝.줄기, 짝비트레이트());
+    var 모음 = [];
+    녹.ondataavailable = function(e){
+      if (e.data && e.data.size){ 모음.push(e.data); 짝.담긴바이트 += e.data.size; }
+    };
+    녹.onstop = function(){
+      if (모음.length)
+        짝.토막들.push({ blob: new Blob(모음, { type: 녹.mimeType || "audio/webm" }), 시작초: 시작초 });
+      모음 = [];
+      if (짝.끝낼까){
+        줄기끄기(짝.줄기); 짝.줄기 = null;
+        짝녹음마무리();
+      } else {
+        녹음기걸기(Math.floor((Date.now() - 짝.시작시각) / 1000));
+      }
+    };
+    녹.start(1000);          // 1초마다 조각을 받아 크기를 보여줄 수 있게
+    짝.녹음기 = 녹;
+    짝.토막시작 = 시작초;
+  }
+
+  function 토막바꾸기(){
+    if (!짝.녹음기 || 짝.녹음기.state === "inactive") return;
+    try { 짝.녹음기.stop(); } catch (e) {}     // onstop 이 다음 토막을 켠다
+  }
+
   function 짝시계갱신(){
     var 초 = Math.floor((Date.now() - 짝.시작시각) / 1000);
     $("pRecClock").textContent = 분초(초);
 
-    var 바이트 = 짝.조각들.reduce(function(a, b){ return a + (b.size || 0); }, 0);
-    var 실을것 = 바이트 * 4 / 3;                       // base64 로 불어난 크기
-    var 찬비율 = 녹음한도 ? (실을것 / 녹음한도) : 0;
-    var 남은분 = Math.max(0, Math.floor((녹음한도 - 실을것) / ((짝비트레이트() / 8) * 4 / 3) / 60));
+    var MB = Math.round(짝.담긴바이트 / 1024 / 1024 * 10) / 10;
+    var 토막수 = 짝.토막들.length + 1;
+    $("pRecSize").textContent = (짝.담긴바이트 ? MB + "MB · " : "") + "토막 " + 토막수 + "개째";
 
-    var 말 = 바이트 ? (Math.round(바이트 / 1024 / 1024 * 10) / 10) + "MB" : "";
-    if (찬비율 > 0.75) 말 += " · 약 " + 남은분 + "분 남았습니다";
-    $("pRecSize").textContent = 말;
+    /* 토막 길이를 넘기면 녹음기를 끊었다 다시 켠다.
+       소리는 이어지고, 보낼 때만 여러 개로 나뉜다. */
+    if (초 - 짝.토막시작 >= 토막길이) 토막바꾸기();
 
-    /* 한도를 넘기면 통째로 날아가므로, 넘기기 전에 스스로 멈추고
-       거기까지라도 글로 옮긴다. 면접이 끝난 뒤에 "너무 깁니다" 를 보는 것보다 낫다. */
-    if (찬비율 >= 1){
+    /* 아주 길어지면 메모리가 버겁다. 넉넉히 두되 끝은 둔다. */
+    if (초 >= 60 * 60){
       짝녹음끝(false);
-      짝알림("pWorkStatus", "녹음이 한도에 닿아 여기까지만 담았습니다. 뒷부분은 들어 있지 않습니다.");
+      짝알림("pWorkStatus", "한 시간이 되어 녹음을 멈췄습니다.");
     }
   }
 
   function 짝녹음끝(버릴까){
+    if (짝.시계){ clearInterval(짝.시계); 짝.시계 = null; }
+    짝.버릴까 = !!버릴까;
+    짝.끝낼까 = true;
+    짝.잰시간 = Math.floor((Date.now() - 짝.시작시각) / 1000);
+
     var 녹 = 짝.녹음기;
     짝.녹음기 = null;
-    if (짝.시계){ clearInterval(짝.시계); 짝.시계 = null; }
-    if (!녹){ 짝보이기("pairSetup"); return; }
+    if (!녹 || 녹.state === "inactive"){ 짝녹음마무리(); return; }
+    try { 녹.stop(); }                     // onstop 이 마지막 토막을 담고 마무리로 넘긴다
+    catch (e) { 짝녹음마무리(); }
+  }
 
-    var 초 = Math.floor((Date.now() - 짝.시작시각) / 1000);
-    녹.onstop = function(){
-      줄기끄기(짝.줄기); 짝.줄기 = null;
-      if (버릴까){ 짝.조각들 = []; 짝보이기("pairSetup"); return; }
-      var blob = new Blob(짝.조각들, { type: 녹.mimeType || "audio/webm" });
-      짝.조각들 = [];
-      if (초 < 5){
-        짝보이기("pairSetup");
-        짝알림("pSetupStatus", "녹음이 너무 짧습니다. 면접을 마친 뒤에 누르세요.", true);
-        return;
-      }
-      글로옮기기(blob, 초);
-    };
-    try { 녹.stop(); } catch (e) { 짝보이기("pairSetup"); }
+  function 짝녹음마무리(){
+    줄기끄기(짝.줄기); 짝.줄기 = null;
+    var 토막 = 짝.토막들; 짝.토막들 = [];
+    var 초 = 짝.잰시간 || 0;
+
+    if (짝.버릴까){ 짝.담긴바이트 = 0; 짝보이기("pairSetup"); return; }
+
+    if (!토막.length || 초 < 5){
+      짝.담긴바이트 = 0;
+      짝보이기("pairSetup");
+      짝알림("pSetupStatus", "녹음이 너무 짧습니다. 면접을 마친 뒤에 누르세요.", true);
+      return;
+    }
+    소리걸기(토막들합치기(토막));         // 들어볼 수 있게 (붙여 놓은 것은 재생용일 뿐)
+    토막들옮기기(토막, 초);
+  }
+
+  /* 재생기에 걸 용도로만 붙인다. 받아쓰기에는 토막을 따로따로 보낸다.
+     webm 여러 개를 이어 붙이면 뒤쪽 머리말이 섞여 브라우저가 앞부분만 재생하기도 하는데,
+     그래도 안 들리는 것보다 낫고 받아쓰기 쪽에는 영향이 없다. */
+  function 토막들합치기(토막){
+    return new Blob(토막.map(function(x){ return x.blob; }), { type: 토막[0].blob.type || "audio/webm" });
   }
 
   /* ---------- 녹음을 글로 옮기기 ---------- */
@@ -1919,51 +1985,62 @@
     }
   }
 
-  function 글로옮기기(blob, 초){
-    소리걸기(blob);
+  /* 토막을 하나씩 차례로 보내고, 돌아온 대화를 시각을 밀어 이어 붙인다.
+     한꺼번에 보내지 않는 이유는 둘이다.
+       · 중계 서버가 한 번에 받을 수 있는 크기가 정해져 있다.
+       · 여러 개를 동시에 보내면 하루 호출 한도를 한꺼번에 깎고 줄을 서게 된다. */
+  function 토막들옮기기(토막, 전체초){
     짝보이기("pairWork");
     짝알림("pWorkStatus", "");
-    $("pWorkMsg").textContent = 초
-      ? ("녹음을 글로 옮기는 중입니다. " + 분초(초) + " 분량이라 몇 분 걸립니다.")
-      : "녹음을 글로 옮기는 중입니다. 길면 몇 분 걸립니다.";
 
-    var 형식 = String(blob.type || "audio/webm").split(";")[0];
+    var 모인대화 = [], 말하기들 = [], 잘린적 = false;
     var 대학 = $("pUnivIn").value.trim(), 학과 = $("pMajorIn").value.trim();
-    var prompt = window.PROMPTS.녹음받아쓰기프롬프트(들릴만한말(짝.카드, 학과), 대학, 학과);
+    /* 다시 옮길 수 있도록 토막을 그대로 둔다. 창을 닫으면 사라진다. */
+    짝.쓴토막 = 토막; 짝.전체초 = 전체초;
 
-    blob을base64로(blob).then(function(자료){
-      /* 중계 서버가 받아 줄 수 있는 크기인지 먼저 본다.
-         Vercel 은 본문 4.5MB 가 한도라 그보다 앞에서 끊는다.
-         Apps Script 는 더 받지만, 여기서 함께 막아 두면 어느 쪽이든 안전하다. */
-      if (자료.length > 녹음한도){
-        var 한도MB = Math.round(녹음한도 / 1024 / 1024 * 10) / 10;
-        throw new Error("녹음이 너무 깁니다. 지금 한도는 " + 한도MB + "MB 인데 "
-                      + (Math.round(자료.length / 1024 / 1024 * 10) / 10) + "MB 입니다. "
-                      + (앱스크립트 || !중계서버
-                          ? "음질을 한 단계 낮춰 다시 녹음하시거나, config.js 의 녹음한도MB 를 올려 보세요."
-                          : "Vercel 중계는 4.5MB 까지만 받습니다. 음질을 낮추거나 앱스크립트로 옮기세요."));
-      }
-      return callGemini(prompt, 키읽기(), 모델읽기("pModelSel", "pModelIn"),
-        function(시도, 초2, status, raw, 한도){
-          짝알림("pWorkStatus", "잠시 기다려 주세요. " + 초2 + "초 뒤 다시 시도합니다. (" + (시도 + 1) + "/" + 한도 + ")");
-        },
-        녹음대화스키마,
-        { parts: [{ inline_data: { mime_type: 형식, data: 자료 } }], temperature: 0.1 }
-      );
-    }).then(function(text){
-      var r = parseJson(text);
-      var 대화 = (r.대화 || []).filter(function(t){ return String(t.말 || "").trim(); });
+    function 알림(i, 덧말){
+      $("pWorkMsg").textContent = "녹음을 글로 옮기는 중입니다. "
+        + 분초(전체초) + " 분량을 " + 토막.length + "토막으로 나눠 보냅니다 — "
+        + (i + 1) + "번째" + (덧말 ? " " + 덧말 : "");
+    }
+
+    function 하나(i){
+      if (i >= 토막.length) return Promise.resolve();
+      알림(i, "");
+      return 한토막(토막[i], 대학, 학과, function(시도, 초2, status, raw, 한도){
+        알림(i, "· " + 초2 + "초 뒤 다시 시도 (" + (시도 + 1) + "/" + 한도 + ")");
+      }).then(function(r){
+        (r.대화 || []).forEach(function(t){
+          var 초3 = 시각을초로(t.시각);
+          모인대화.push({
+            시각: (초3 === null) ? "" : 초로시각(초3 + 토막[i].시작초),
+            역할: t.역할, 말: t.말
+          });
+        });
+        if (r.말하기 && r.말하기.속도) 말하기들.push(r.말하기);
+        if (r.__잘림) 잘린적 = true;
+        return 하나(i + 1);
+      });
+    }
+
+    하나(0).then(function(){
+      var 대화 = 모인대화.filter(function(t){ return String(t.말 || "").trim(); });
       if (!대화.length){
         짝보이기("pairSetup");
         짝알림("pSetupStatus", "말소리를 찾지 못했습니다. 기기를 두 사람 가까이 옮기고 다시 해보세요.", true);
         return;
       }
       짝.대화 = 대화;
-      짝.말하기 = r.말하기 || null;
+      짝.말하기 = 말하기모으기(말하기들);
       대본채우기(대화);
+      짝.처음글 = $("pScript").value;        // 손으로 고쳤는지 견주어 볼 기준
       보기바꾸기("고치기");
-      말하기보이기(r.말하기);
+      말하기보이기(짝.말하기);
       짝보이기("pairText");
+      다시옮기기칸갱신();
+
+      var 빈틈 = 빈구간찾기(대화, 전체초);
+      짝알림("pTextStatus", 알릴말(잘린적, 빈틈), !!(잘린적 || 빈틈.length));
     }).catch(function(e){
       var m = String((e && e.message) || e);
       짝보이기("pairSetup");
@@ -1971,6 +2048,131 @@
         ? "받아쓴 내용을 읽지 못했습니다. 다시 해보시거나 모델을 한 단계 올려보세요."
         : ("글로 옮기지 못했습니다. " + m), true);
     });
+  }
+
+  function 초로시각(초){
+    var n = Math.max(0, Math.round(초));
+    return Math.floor(n / 60) + ":" + 두자리(n % 60);
+  }
+
+  /* 토막마다 말하기 관찰이 하나씩 온다. 가장 자주 나온 값을 고른다. */
+  function 말하기모으기(목록){
+    if (!목록.length) return null;
+    if (목록.length === 1) return 목록[0];
+    function 흔한것(칸){
+      var 셈 = {}, 으뜸 = "", 많이 = 0;
+      목록.forEach(function(m){
+        var v = m[칸]; if (!v) return;
+        셈[v] = (셈[v] || 0) + 1;
+        if (셈[v] > 많이){ 많이 = 셈[v]; 으뜸 = v; }
+      });
+      return 으뜸;
+    }
+    return {
+      속도: 흔한것("속도"), 머뭇거림: 흔한것("머뭇거림"), 또렷함: 흔한것("또렷함"),
+      한마디: (목록.find(function(m){ return m.한마디; }) || {}).한마디 || ""
+    };
+  }
+
+  /* 시각이 크게 건너뛴 자리를 찾는다.
+     받아쓰기가 중간을 버리면 여기에 걸린다. 눈으로 알 수 있어야 고칠 수 있다. */
+  function 빈구간찾기(대화, 전체초){
+    var 빈틈 = [], 앞 = null;
+    대화.forEach(function(t){
+      var 초 = 시각을초로(t.시각);
+      if (초 === null) return;
+      if (앞 !== null && 초 - 앞 >= 45) 빈틈.push(초로시각(앞) + "~" + 초로시각(초));
+      앞 = 초;
+    });
+    if (앞 !== null && 전체초 && 전체초 - 앞 >= 60)
+      빈틈.push(초로시각(앞) + " 뒤");
+    return 빈틈;
+  }
+
+  function 알릴말(잘린적, 빈틈){
+    var 말 = [];
+    if (잘린적) 말.push("받아쓴 글의 일부가 잘렸습니다.");
+    if (빈틈.length)
+      말.push("시각이 크게 건너뛴 곳이 있습니다 (" + 빈틈.slice(0, 4).join(", ")
+            + (빈틈.length > 4 ? " 외 " + (빈틈.length - 4) + "곳" : "")
+            + "). 그 사이 말이 빠졌을 수 있으니 녹음을 들어보고 채워 주세요.");
+    return 말.join(" ");
+  }
+
+  function 한토막(토막, 대학, 학과, 다시알림){
+    var 형식 = String(토막.blob.type || "audio/webm").split(";")[0];
+    var prompt = window.PROMPTS.녹음받아쓰기프롬프트([], 대학, 학과);
+    return blob을base64로(토막.blob).then(function(자료){
+      if (자료.length > 녹음한도){
+        var 한도MB = Math.round(녹음한도 / 1024 / 1024 * 10) / 10;
+        throw new Error("토막 하나가 한도(" + 한도MB + "MB)를 넘었습니다. "
+                      + "음질을 낮추거나 config.js 의 토막길이_초 를 줄여 보세요.");
+      }
+      return callGemini(prompt, 키읽기(), 모델읽기("pModelSel", "pModelIn"),
+        다시알림, 녹음대화스키마,
+        { parts: [{ inline_data: { mime_type: 형식, data: 자료 } }], temperature: 0.1, 최대출력: 32768 }
+      );
+    }).then(parseJson);
+  }
+
+  /* 넣은 파일은 녹음과 달리 이미 한 덩이다. 칼로 자를 수 없으니
+     브라우저로 소리를 풀어 토막마다 WAV 로 다시 묶는다.
+     16kHz 홑소리로 줄여도 받아쓰기에는 모자라지 않고 크기가 줄어든다. */
+  function 파일토막내기(file){
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return Promise.reject(new Error("이 브라우저는 소리 파일을 풀지 못합니다."));
+
+    return file.arrayBuffer().then(function(buf){
+      var ctx = new AC();
+      return new Promise(function(풀기, 깨기){
+        ctx.decodeAudioData(buf, 풀기, function(){ 깨기(new Error("decode")); });
+      }).then(function(소리){
+        try { ctx.close(); } catch (e) {}
+        var 전체초 = Math.round(소리.duration);
+        /* WAV 는 눌러 담지 않아 녹음한 것보다 훨씬 크다.
+           16kHz 홑소리 16비트면 1초에 32KB, base64 로 42KB 쯤 된다.
+           한도에 맞춰 토막을 더 잘게 끊는다. */
+        var 들어갈초 = Math.floor(녹음한도 * 3 / 4 / 32000) - 2;
+        var 길이 = Math.max(30, Math.min(토막길이, 들어갈초));
+        var 토막 = [];
+        for (var 시작 = 0; 시작 < 소리.duration; 시작 += 길이){
+          var 끝 = Math.min(시작 + 길이, 소리.duration);
+          토막.push({ blob: WAV로(소리, 시작, 끝), 시작초: Math.round(시작) });
+        }
+        return { 토막: 토막, 전체초: 전체초 };
+      });
+    });
+  }
+
+  /* 고른 구간을 16kHz 홑소리 16비트 WAV 로 묶는다. */
+  function WAV로(소리, 시작초, 끝초){
+    var 목표 = 16000;
+    var 원래 = 소리.sampleRate, 채널수 = 소리.numberOfChannels;
+    var 첫칸 = Math.floor(시작초 * 원래), 끝칸 = Math.floor(끝초 * 원래);
+    var 길이 = Math.max(0, 끝칸 - 첫칸);
+    var 셀수 = Math.floor(길이 * 목표 / 원래);
+
+    var 받침 = [];
+    for (var c = 0; c < 채널수; c++) 받침.push(소리.getChannelData(c));
+
+    var 버퍼 = new ArrayBuffer(44 + 셀수 * 2);
+    var v = new DataView(버퍼);
+    function 글자(자리, 글){ for (var i = 0; i < 글.length; i++) v.setUint8(자리 + i, 글.charCodeAt(i)); }
+    글자(0, "RIFF");  v.setUint32(4, 36 + 셀수 * 2, true);  글자(8, "WAVE");
+    글자(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true);
+    v.setUint16(22, 1, true); v.setUint32(24, 목표, true);
+    v.setUint32(28, 목표 * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+    글자(36, "data"); v.setUint32(40, 셀수 * 2, true);
+
+    for (var i2 = 0; i2 < 셀수; i2++){
+      var 자리 = 첫칸 + Math.floor(i2 * 원래 / 목표);
+      var 값 = 0;
+      for (var c2 = 0; c2 < 채널수; c2++) 값 += (받침[c2][자리] || 0);
+      값 = 값 / 채널수;
+      값 = 값 < -1 ? -1 : (값 > 1 ? 1 : 값);
+      v.setInt16(44 + i2 * 2, 값 < 0 ? 값 * 0x8000 : 값 * 0x7FFF, true);
+    }
+    return new Blob([버퍼], { type: "audio/wav" });
   }
 
   /* ---------- 받아쓴 글 고치기 ---------- */
@@ -2100,9 +2302,161 @@
       + (말하기.한마디 ? "<p style=\"margin:0\">" + escHtml(말하기.한마디) + "</p>" : "");
   }
 
+  /* ---------- 다시 옮기기 ----------
+     같은 녹음을 다시 보내는 것은 주사위를 다시 던지는 일이다.
+     빠졌던 대목이 들어올 수도, 멀쩡하던 데가 빠질 수도 있다.
+     그래서 토막 하나만 고를 수 있게 한다. 호출도 한 번이면 된다. */
+  function 다시옮기기칸갱신(){
+    var 줄 = $("pRedoRow"), 칸 = $("pRedoSel");
+    if (!짝.쓴토막 || 짝.쓴토막.length === 0){ 줄.style.display = "none"; return; }
+    줄.style.display = "";
+    칸.innerHTML = "";
+
+    var 빈틈든토막 = 빈틈든토막찾기();
+    function 더하기(값, 글){
+      var o = document.createElement("option");
+      o.value = 값; o.textContent = 글; 칸.appendChild(o);
+    }
+    짝.쓴토막.forEach(function(t, i){
+      var 끝 = (i + 1 < 짝.쓴토막.length) ? 짝.쓴토막[i + 1].시작초 : (짝.전체초 || 0);
+      더하기(String(i), (i + 1) + "번째 토막 (" + 초로시각(t.시작초) + "~" + 초로시각(끝) + ")"
+                        + (빈틈든토막.indexOf(i) >= 0 ? " · 빠진 곳 있음" : ""));
+    });
+    if (짝.쓴토막.length > 1) 더하기("all", "전체 (" + 짝.쓴토막.length + "번 호출)");
+
+    // 빠진 곳이 있는 토막이 있으면 그걸 먼저 고르게 해 둔다
+    if (빈틈든토막.length) 칸.value = String(빈틈든토막[0]);
+    $("pRedoTip").textContent = 빈틈든토막.length
+      ? "빠진 곳이 있는 토막을 골라 두었습니다"
+      : "결과가 미심쩍은 토막만 골라 다시 해보세요";
+  }
+
+  /* 지금 글의 빈 구간이 어느 토막에 드는지 */
+  function 빈틈든토막찾기(){
+    if (!짝.쓴토막) return [];
+    var 턴 = 대본읽기(), 든것 = [], 앞 = null;
+    턴.forEach(function(t){
+      var 초 = 시각을초로(t.시각);
+      if (초 === null) return;
+      if (앞 !== null && 초 - 앞 >= 45){
+        짝.쓴토막.forEach(function(x, i){
+          var 끝 = (i + 1 < 짝.쓴토막.length) ? 짝.쓴토막[i + 1].시작초 : (짝.전체초 || 1e9);
+          if (앞 < 끝 && 초 > x.시작초 && 든것.indexOf(i) < 0) 든것.push(i);
+        });
+      }
+      앞 = 초;
+    });
+    return 든것.sort(function(a, b){ return a - b; });
+  }
+
+  function 다시옮기기(){
+    if (!짝.쓴토막 || !짝.쓴토막.length) return;
+    var 고른것 = $("pRedoSel").value;
+    var 전부 = (고른것 === "all");
+
+    /* 손으로 고친 뒤라면 덮어쓰기 전에 묻는다. */
+    if (짝.처음글 !== undefined && $("pScript").value !== 짝.처음글){
+      var 말 = 전부
+        ? "받아쓴 글을 고치셨습니다. 전체를 다시 옮기면 고치신 내용이 모두 사라집니다. 그래도 할까요?"
+        : "받아쓴 글을 고치셨습니다. 이 토막에 해당하는 부분은 새로 받은 것으로 바뀝니다. 그래도 할까요?";
+      if (!window.confirm(말)) return;
+    }
+
+    var 대학 = $("pUnivIn").value.trim(), 학과 = $("pMajorIn").value.trim();
+    var 할것 = 전부 ? 짝.쓴토막.map(function(_, i){ return i; }) : [parseInt(고른것, 10)];
+
+    짝보이기("pairWork");
+    짝알림("pWorkStatus", "");
+
+    var 받은것 = {}, 잘린적 = false;
+    function 하나(k){
+      if (k >= 할것.length) return Promise.resolve();
+      var i = 할것[k];
+      $("pWorkMsg").textContent = "다시 옮기는 중입니다 — " + (i + 1) + "번째 토막"
+                                + (할것.length > 1 ? " (" + (k + 1) + "/" + 할것.length + ")" : "");
+      return 한토막(짝.쓴토막[i], 대학, 학과, function(시도, 초2, s2, raw, 한도){
+        짝알림("pWorkStatus", 초2 + "초 뒤 다시 시도합니다. (" + (시도 + 1) + "/" + 한도 + ")");
+      }).then(function(r){
+        받은것[i] = r;
+        if (r.__잘림) 잘린적 = true;
+        return 하나(k + 1);
+      });
+    }
+
+    하나(0).then(function(){
+      var 새턴 = 전부 ? [] : 대본읽기().filter(function(t){
+        /* 다시 받은 토막 구간의 말은 걷어내고, 나머지는 그대로 둔다. */
+        var 초 = 시각을초로(t.시각);
+        if (초 === null) return true;
+        return !할것.some(function(i){
+          var 끝 = (i + 1 < 짝.쓴토막.length) ? 짝.쓴토막[i + 1].시작초 : (짝.전체초 || 1e9);
+          return 초 >= 짝.쓴토막[i].시작초 && 초 < 끝;
+        });
+      });
+
+      할것.forEach(function(i){
+        ((받은것[i] || {}).대화 || []).forEach(function(t){
+          var 초 = 시각을초로(t.시각);
+          새턴.push({ 시각: (초 === null) ? "" : 초로시각(초 + 짝.쓴토막[i].시작초),
+                     역할: t.역할, 말: t.말 });
+        });
+      });
+
+      새턴.sort(function(a, b){
+        var x = 시각을초로(a.시각), y = 시각을초로(b.시각);
+        if (x === null || y === null) return 0;      // 시각 없는 것은 자리를 지킨다
+        return x - y;
+      });
+
+      var 대화 = 새턴.filter(function(t){ return String(t.말 || "").trim(); });
+      if (!대화.length){
+        짝보이기("pairText");
+        짝알림("pTextStatus", "다시 옮겨도 말소리를 찾지 못했습니다.", true);
+        return;
+      }
+      짝.대화 = 대화;
+      대본채우기(대화);
+      짝.처음글 = $("pScript").value;
+      보기바꾸기("고치기");
+      짝보이기("pairText");
+      다시옮기기칸갱신();
+
+      var 빈틈 = 빈구간찾기(대화, 짝.전체초);
+      var 말 = 알릴말(잘린적, 빈틈);
+      짝알림("pTextStatus", 말 || "다시 옮겼습니다.", !!말);
+    }).catch(function(e){
+      짝보이기("pairText");
+      짝알림("pTextStatus", "다시 옮기지 못했습니다. " + String((e && e.message) || e), true);
+    });
+  }
+
   /* ---------- 피드백으로 넘기기 ----------
      혼자 연습하기의 피드백 화면을 그대로 쓴다.
      면접 객체를 끝난 상태로 만들어 놓고 iv 화면을 피드백 모양으로 연다. */
+  /* 피드백 화면은 두 길이 나눠 쓴다. 길에 맞는 단추만 남긴다.
+     녹음에서 왔는데 「다시 면접 보기」나 「카드로 돌아가기」가 보이면
+     누르는 순간 혼자 연습하기 쪽으로 끌려간다. */
+  function 피드백단추들(어느길){
+    var 녹음 = (어느길 === "녹음");
+    [["doneAgainBtn", !녹음], ["doneCardBtn", !녹음], ["doneBackPairBtn", 녹음],
+     ["fbAgainBtn", !녹음], ["fbCardBtn", !녹음],
+     ["doneHomeBtn", 녹음],
+     ["fbBackPairBtn", 녹음], ["fbHomeBtn", 녹음]].forEach(function(쌍){
+      var el = $(쌍[0]);
+      if (el) el.style.display = 쌍[1] ? "" : "none";
+    });
+  }
+
+  function 받아쓴글로(){
+    var a = $("pAudio");
+    try { a.pause(); } catch (e) {}
+    면접 = null; 피드백 = null;
+    $("fb").style.display = "none";
+    $("ivDone").style.display = "none";
+    짝보이기("pairText");
+    show("pair");
+  }
+
   function 짝피드백으로(){
     var 턴 = 대본읽기();
     if (턴.length < 2){
@@ -2110,11 +2464,14 @@
     }
     짝알림("pTextStatus", "");
 
-    카드 = 짝.카드;
-    난이도 = 0;                       // 사람이 진행한 면접이라는 표시
+    /* 혼자 연습하기의 카드와 난이도는 건드리지 않는다.
+       전에는 여기서 둘을 덮어써서, 되돌아갔을 때 그쪽이 꼬였다.
+       사람이 진행한 면접이라는 표시는 면접 꾸러미 안에만 둔다. */
     말하기기록 = 짝.말하기 ? [짝.말하기] : [];
     면접 = {
-      카드: 짝.카드,
+      카드: null,
+      단계: 0,                        // 0 = 사람이 진행한 면접
+      녹음에서옴: true,
       대학: $("pUnivIn").value.trim(),
       학과: $("pMajorIn").value.trim(),
       대화: 턴,
@@ -2125,6 +2482,7 @@
     피드백 = null;
     $("fb").style.display = "none";
 
+    피드백단추들("녹음");
     var 띠 = document.querySelector("#iv .iv-bar");
     if (띠) 띠.style.display = "none";           // 읽어주기·난이도·시계는 여기 해당 없음
     $("qcard").style.display = "none";
@@ -2179,36 +2537,25 @@
       짝알림("pSetupStatus", "소리 파일만 넣을 수 있습니다.", true); return;
     }
     시험멈춤();
-    글로옮기기(f, 0);
-  });
+    소리걸기(f);
+    짝보이기("pairWork");
+    $("pWorkMsg").textContent = "소리 파일을 여는 중입니다.";
+    짝알림("pWorkStatus", "");
 
-  $("pCardBtn").addEventListener("click", function(){ $("pCardFile").click(); });
-  $("pCardFile").addEventListener("change", function(){
-    var f = this.files && this.files[0];
-    this.value = "";
-    if (!f) return;
-    var r = new FileReader();
-    r.onerror = function(){ 짝알림("pSetupStatus", "파일을 열지 못했습니다.", true); };
-    r.onload = function(){
-      var d;
-      try { d = JSON.parse(r.result); }
-      catch (e){ 짝알림("pSetupStatus", "면접 카드 파일이 아닌 것 같습니다.", true); return; }
-      if (!d || !d.활동 || !d.활동.length){
-        짝알림("pSetupStatus", "활동이 들어 있지 않습니다. 다른 파일인지 확인해 주세요.", true); return;
-      }
-      짝.카드 = { 진로흐름: d.진로흐름, 출결: d.출결, 활동: d.활동, 빈틈: d.빈틈 };
-      if (d.대학 && !$("pUnivIn").value) $("pUnivIn").value = d.대학;
-      if (d.학과 && !$("pMajorIn").value) $("pMajorIn").value = d.학과;
-      $("pCardState").textContent = "활동 " + d.활동.length + "개 불러옴";
-      짝알림("pSetupStatus", "");
-    };
-    r.readAsText(f, "utf-8");
+    파일토막내기(f).then(function(r){
+      토막들옮기기(r.토막, r.전체초);
+    }).catch(function(){
+      /* 풀지 못하는 형식이면 통째로 보낸다. 중간이 빠질 수 있다고 알린다. */
+      짝알림("pWorkStatus", "이 파일은 토막내지 못해 통째로 보냅니다. 긴 녹음은 중간이 빠질 수 있습니다.");
+      토막들옮기기([{ blob: f, 시작초: 0 }], 0);
+    });
   });
 
   $("pScript").addEventListener("input", 대본세기);
   $("pViewBtn").addEventListener("click", function(){
     보기바꾸기(짝.보기 === "듣기" ? "고치기" : "듣기");
   });
+  $("pRedoBtn").addEventListener("click", 다시옮기기);
   $("pToFbBtn").addEventListener("click", 짝피드백으로);
   $("pAgainBtn").addEventListener("click", function(){
     var a = $("pAudio");
@@ -2216,6 +2563,8 @@
     if (짝.소리주소){ try { URL.revokeObjectURL(짝.소리주소); } catch (e) {} 짝.소리주소 = null; }
     a.removeAttribute("src");
     $("pAudioWrap").style.display = "none";
+    짝.쓴토막 = null; 짝.처음글 = undefined;
+    $("pRedoRow").style.display = "none";
     짝보이기("pairSetup"); 짝알림("pSetupStatus", "");
   });
   $("pScriptSaveBtn").addEventListener("click", function(){
@@ -2663,7 +3012,7 @@
           $("ivStatus").textContent = "잠시 기다려 주세요. " + 초2 + "초 뒤 다시 시도합니다. (" + (시도+1) + "/" + 한도 + ")";
         },
         받아쓰기스키마,
-        { parts: [{ inline_data: { mime_type: 형식, data: 자료 } }], temperature: 0.1 }
+        { parts: [{ inline_data: { mime_type: 형식, data: 자료 } }], temperature: 0.1, 최대출력: 16384 }
       );
     }).then(function(text){
       var r = parseJson(text);
@@ -2676,8 +3025,14 @@
       var 앞 = $("ansIn").value.trim();
       $("ansIn").value = (앞 ? 앞 + " " : "") + 글;
       if (r.말하기) 이번말하기 = r.말하기;
-      $("ivStatus").className = "status";
-      $("ivStatus").textContent = "";
+      if (r.__잘림){
+        $("ivStatus").className = "status error";
+        $("ivStatus").textContent = "받아쓴 글의 뒷부분이 잘렸습니다. 끊긴 곳부터 직접 이어 적으시거나, "
+                                  + "답을 짧게 나눠 두 번에 걸쳐 녹음해 보세요.";
+      } else {
+        $("ivStatus").className = "status";
+        $("ivStatus").textContent = "";
+      }
       $("ansTip").textContent = "잘못 받아쓴 곳이 있으면 고친 뒤 보내세요";
       $("ansIn").focus();
     }).catch(function(e){
@@ -2793,8 +3148,7 @@
     var 띠2 = document.querySelector("#iv .iv-bar");
     if (띠2) 띠2.style.display = "";                // 녹음 쪽에서 감췄을 수 있다
     $("qcard").style.display = "";
-    $("doneAgainBtn").style.display = "";
-    $("doneCardBtn").style.display = "";
+    피드백단추들("혼자");
     $("doneTitle").textContent = "면접이 끝났습니다.";
     $("ivLog").style.display = "none";
     $("ivLogBody").innerHTML = "";
@@ -2937,7 +3291,8 @@
 
     var key = 키읽기();
     var model = 모델읽기("fbModelSel2", "fbModelIn2");
-    var prompt = window.PROMPTS.평가프롬프트(면접.카드, 면접.대화, 난이도, 면접.대학, 면접.학과, 말하기기록);
+    var 단계 = (면접 && 면접.단계 !== undefined) ? 면접.단계 : 난이도;
+    var prompt = window.PROMPTS.평가프롬프트(면접.카드, 면접.대화, 단계, 면접.대학, 면접.학과, 말하기기록);
 
     callGemini(prompt, key, model, function(시도, 초, status, raw, 한도){
       $("fbStatus").textContent = "잠시 기다려 주세요. " + 초 + "초 뒤 다시 시도합니다. (" + (시도+1) + "/" + 한도 + ")";
@@ -3096,6 +3451,25 @@
 
   $("fbBtn").addEventListener("click", 피드백받기);
   $("fbSaveBtn").addEventListener("click", function(){ 파일받기("모의면접_피드백.txt", 피드백글()); });
+  $("fbBackPairBtn").addEventListener("click", 받아쓴글로);
+  $("doneBackPairBtn").addEventListener("click", 받아쓴글로);
+  function 처음화면으로(){
+    var a = $("pAudio");
+    try { a.pause(); } catch (e) {}
+    면접 = null; 피드백 = null;
+    $("fb").style.display = "none";
+    $("ivDone").style.display = "none";
+    show("home");
+  }
+  $("doneHomeBtn").addEventListener("click", 처음화면으로);
+  $("fbHomeBtn").addEventListener("click", function(){
+    var a = $("pAudio");
+    try { a.pause(); } catch (e) {}
+    면접 = null; 피드백 = null;
+    $("fb").style.display = "none";
+    $("ivDone").style.display = "none";
+    show("home");
+  });
   $("fbAgainBtn").addEventListener("click", function(){ 면접시작(); });
   $("fbCardBtn").addEventListener("click", function(){ show("cardview"); 단계표시(2); });
 
